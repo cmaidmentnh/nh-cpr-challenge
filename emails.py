@@ -151,6 +151,57 @@ def send_training_approved(training):
     send_email(training.host_email, 'Your CPR Training Has Been Approved!', html)
 
 
+def send_admin_new_host_application(training):
+    """Notify admin that a new host training application was submitted."""
+    admin_email = os.getenv('ADMIN_EMAIL', '')
+    if not admin_email:
+        print("ADMIN_EMAIL not set, skipping admin notification")
+        return
+    app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
+    html = _email_wrapper(f"""
+<h2 style="color:#1e3a5f;margin-top:0;">New Host Application</h2>
+<p>A new training application has been submitted and needs review.</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0;">
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Host</td>
+<td style="padding:8px;">{training.host_name}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Email</td>
+<td style="padding:8px;">{training.host_email}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Organization</td>
+<td style="padding:8px;">{training.organization or 'N/A'}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Location</td>
+<td style="padding:8px;">{training.location_name}, {training.city or ''}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Date</td>
+<td style="padding:8px;">{training.date.strftime('%A, %B %d, %Y')}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">District</td>
+<td style="padding:8px;">{training.district}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Capacity</td>
+<td style="padding:8px;">{training.capacity}</td></tr>
+</table>
+<p style="text-align:center;margin-top:24px;">
+<a href="{app_url}/admin/trainings" style="display:inline-block;padding:12px 24px;background:#1e3a5f;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Review in Admin</a>
+</p>
+""")
+    send_email(admin_email, f'New CPR Training Application — {training.host_name}', html)
+
+
+def send_host_post_event_reminder(training):
+    """Remind host to submit attendance count after their event."""
+    app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
+    if not training.host_token:
+        return
+    html = _email_wrapper(f"""
+<h2 style="color:#1e3a5f;margin-top:0;">How Did It Go?</h2>
+<p>Hi {training.host_name},</p>
+<p>Your CPR training at <strong>{training.location_name}</strong> was scheduled for yesterday. Thank you for hosting!</p>
+<p>Please take a moment to report how many people attended. This helps us track the CPR Challenge progress and issue certificates to participants.</p>
+<p style="text-align:center;margin-top:24px;">
+<a href="{app_url}/host/report/{training.host_token}" style="display:inline-block;padding:12px 24px;background:#d4a843;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Report Attendance</a>
+</p>
+<p style="color:#64748b;font-size:13px;">If you already submitted your report, you can ignore this email. Thank you!</p>
+""")
+    send_email(training.host_email, 'How did your CPR training go? Please report attendance', html)
+
+
 def send_certificate_ready(rsvp, certificate):
     """Notify attendee their certificate is available."""
     app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')

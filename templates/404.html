@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{% if error_500 %}Something Went Wrong{% else %}Page Not Found{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-16 text-center">
+    <p class="text-6xl font-serif font-bold text-navy-200 mb-4">{% if error_500 %}500{% else %}404{% endif %}</p>
+    <h1 class="font-serif text-2xl font-bold text-navy-900 mb-3">{% if error_500 %}Something went wrong{% else %}Page not found{% endif %}</h1>
+    <p class="text-gray-600 mb-8">{% if error_500 %}We're working on it. Please try again in a moment.{% else %}The page you're looking for doesn't exist or has been moved.{% endif %}</p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="{{ url_for('index') }}" class="bg-navy-900 text-white px-6 py-3 font-bold text-sm uppercase tracking-wide hover:bg-navy-800 transition">Go Home</a>
+        <a href="{{ url_for('trainings') }}" class="border border-navy-300 text-navy-700 px-6 py-3 font-bold text-sm uppercase tracking-wide hover:border-navy-900 hover:text-navy-900 transition">Find a Training</a>
+    </div>
+</div>
+{% endblock %}

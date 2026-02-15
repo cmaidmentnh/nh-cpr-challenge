@@ -10,7 +10,7 @@ from functools import wraps
 from io import BytesIO, StringIO
 
 from flask import (Flask, render_template, request, jsonify, redirect,
-                   url_for, session, send_file, flash, abort)
+                   url_for, session, send_file, flash, abort, Response, make_response)
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -20,7 +20,8 @@ from dotenv import load_dotenv
 from models import db, Training, RSVP, Attendance, Certificate, Settings, Subscriber, COUNCILORS, DISTRICT_COLORS
 from emails import (send_rsvp_confirmation, send_rsvp_notification_to_host,
                     send_training_approved, send_certificate_ready,
-                    send_host_application_received)
+                    send_host_application_received, send_admin_new_host_application,
+                    send_host_post_event_reminder)
 from certificates import generate_certificate
 from geocode import geocode_address
 
@@ -177,6 +178,11 @@ def host():
             send_host_application_received(training)
         except Exception as e:
             print(f"Host confirmation email error: {e}")
+
+        try:
+            send_admin_new_host_application(training)
+        except Exception as e:
+            print(f"Admin notification email error: {e}")
 
         flash('Thank you! Your training application has been submitted and is pending review. Check your email for confirmation.', 'success')
         return redirect(url_for('host'))
@@ -657,6 +663,89 @@ def admin_settings():
 
     flash('Settings saved.', 'success')
     return redirect(url_for('admin_dashboard'))
+
+
+# =========================================================================
+# SITEMAP & ROBOTS
+# =========================================================================
+
+@app.route('/sitemap.xml')
+def sitemap():
+    pages = [
+        ('/', '1.0', 'weekly'),
+        ('/trainings', '0.9', 'daily'),
+        ('/host', '0.8', 'monthly'),
+        ('/about', '0.7', 'monthly'),
+        ('/map', '0.7', 'monthly'),
+        ('/leaderboard', '0.6', 'daily'),
+    ]
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    base = 'https://cprchallengenh.com'
+    for path, priority, freq in pages:
+        xml.append(f'<url><loc>{base}{path}</loc>'
+                   f'<changefreq>{freq}</changefreq>'
+                   f'<priority>{priority}</priority></url>')
+    # Add individual training pages
+    for t in Training.query.filter_by(status='approved').all():
+        xml.append(f'<url><loc>{base}/rsvp/{t.id}</loc>'
+                   f'<changefreq>weekly</changefreq>'
+                   f'<priority>0.6</priority></url>')
+    xml.append('</urlset>')
+    return Response('\n'.join(xml), mimetype='application/xml')
+
+
+@app.route('/robots.txt')
+def robots():
+    txt = """User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /host/report/
+Disallow: /api/
+
+Sitemap: https://cprchallengenh.com/sitemap.xml"""
+    return Response(txt, mimetype='text/plain')
+
+
+# =========================================================================
+# ERROR HANDLERS
+# =========================================================================
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('404.html', error_500=True), 500
+
+
+# =========================================================================
+# CLI COMMANDS
+# =========================================================================
+
+@app.cli.command('send-post-event-reminders')
+def send_post_event_reminders():
+    """Send reminder emails to hosts whose trainings were yesterday."""
+    from datetime import timedelta
+    yesterday = date.today() - timedelta(days=1)
+    trainings = Training.query.filter_by(
+        status='approved', date=yesterday
+    ).all()
+    sent = 0
+    for t in trainings:
+        # Skip if already reported
+        existing = Attendance.query.filter_by(training_id=t.id).first()
+        if existing:
+            continue
+        try:
+            send_host_post_event_reminder(t)
+            sent += 1
+            print(f"Sent reminder to {t.host_email} for {t.location_name}")
+        except Exception as e:
+            print(f"Error sending to {t.host_email}: {e}")
+    print(f"Done. Sent {sent} reminder(s).")
 
 
 # ---------------------------------------------------------------------------
