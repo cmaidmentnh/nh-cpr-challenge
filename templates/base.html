@@ -4,8 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}NH CPR Challenge{% endblock %} | EMS Week 2026</title>
-    <meta name="description" content="Free Hands-Only CPR training across New Hampshire during EMS Week 2026. A bipartisan initiative of the NH Executive Council.">
+    <meta name="description" content="{% block meta_description %}Free Hands-Only CPR training across New Hampshire during EMS Week 2026 (May 17-23). A bipartisan initiative of the NH Executive Council. Find a training near you — 15 minutes, no experience needed, completely free.{% endblock %}">
+    <meta name="keywords" content="CPR training New Hampshire, free CPR class NH, Hands-Only CPR, EMS Week 2026, NH Executive Council, cardiac arrest, CPR certification NH, learn CPR NH, bystander CPR, CPR near me New Hampshire">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://cprchallengenh.com{{ request.path }}">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="NH CPR Challenge">
+    <meta property="og:title" content="{% block og_title %}NH CPR Challenge — Free Hands-Only CPR Training{% endblock %}">
+    <meta property="og:description" content="Learn life-saving Hands-Only CPR in just 15 minutes during EMS Week 2026. Free trainings across all five NH Executive Council districts. No experience needed.">
+    <meta property="og:image" content="https://cprchallengenh.com{{ url_for('static', filename='img/og-image.png') }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://cprchallengenh.com{{ request.path }}">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NH CPR Challenge — Free CPR Training During EMS Week 2026">
+    <meta name="twitter:description" content="Free Hands-Only CPR training across New Hampshire. 15 minutes. No experience needed. Find a training near you.">
+    <meta name="twitter:image" content="https://cprchallengenh.com{{ url_for('static', filename='img/og-image.png') }}">
+
     <link rel="icon" type="image/webp" href="{{ url_for('static', filename='img/nh-seal.webp') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/nh-seal.webp') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
@@ -48,6 +70,43 @@
     <style>
         [x-cloak] { display: none !important; }
     </style>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": "NH CPR Challenge — Free Hands-Only CPR Training",
+        "description": "Free Hands-Only CPR awareness training across all five New Hampshire Executive Council districts during EMS Week 2026. Learn two steps that can save a life in just 15 minutes.",
+        "startDate": "2026-05-17",
+        "endDate": "2026-05-23",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "eventStatus": "https://schema.org/EventScheduled",
+        "location": {
+            "@type": "Place",
+            "name": "Various locations across New Hampshire",
+            "address": {
+                "@type": "PostalAddress",
+                "addressRegion": "NH",
+                "addressCountry": "US"
+            }
+        },
+        "organizer": {
+            "@type": "GovernmentOrganization",
+            "name": "New Hampshire Executive Council",
+            "url": "https://cprchallengenh.com"
+        },
+        "isAccessibleForFree": true,
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "url": "https://cprchallengenh.com/trainings"
+        },
+        "image": "https://cprchallengenh.com/static/img/og-image.png"
+    }
+    </script>
 </head>
 <body class="bg-white text-gray-900 min-h-screen flex flex-col">
 
