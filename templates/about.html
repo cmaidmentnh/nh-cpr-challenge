@@ -2,85 +2,106 @@
 {% block title %}About{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <h1 class="font-serif text-3xl font-bold text-navy-900 mb-8">About the NH CPR Challenge</h1>
+<div class="max-w-6xl mx-auto px-4 py-6 md:py-8">
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-navy-900 mb-6 md:mb-8">About the NH CPR Challenge</h1>
+
+    <!-- Stats bar — always visible near top, horizontal on all screens -->
+    <section class="bg-cpr-light border border-red-200 p-4 md:p-6 mb-6 md:mb-8">
+        <div class="grid grid-cols-3 gap-3 md:gap-6 text-center">
+            <div>
+                <p class="text-xl md:text-3xl font-bold text-cpr-red font-serif">350,000+</p>
+                <p class="text-gray-700 text-xs mt-1">cardiac arrests outside hospitals each year</p>
+            </div>
+            <div>
+                <p class="text-xl md:text-3xl font-bold text-cpr-red font-serif">2&ndash;3x</p>
+                <p class="text-gray-700 text-xs mt-1">increased survival with bystander CPR</p>
+            </div>
+            <div>
+                <p class="text-xl md:text-3xl font-bold text-cpr-red font-serif">~10%</p>
+                <p class="text-gray-700 text-xs mt-1">current survival rate</p>
+            </div>
+        </div>
+        <p class="text-gray-600 text-xs mt-3 text-center leading-relaxed">
+            For every minute without CPR, survival drops 7&ndash;10%. Bystander CPR can double or triple the chance of survival.
+        </p>
+    </section>
 
     <!-- Two-column layout: content left, sidebar right on md+ -->
-    <div class="grid md:grid-cols-3 gap-8">
+    <div class="grid md:grid-cols-3 gap-6 md:gap-8">
 
         <!-- Main content column (2/3 width on desktop) -->
-        <div class="md:col-span-2 space-y-8">
+        <div class="md:col-span-2 space-y-6 md:space-y-8">
 
             <!-- What is it -->
-            <section class="bg-white border border-gray-200 p-6 md:p-8">
-                <h2 class="font-serif text-2xl font-bold text-navy-900 mb-4">What Is the CPR Challenge?</h2>
-                <p class="text-gray-700 mb-4">
+            <section class="bg-white border border-gray-200 p-5 md:p-8">
+                <h2 class="font-serif text-xl md:text-2xl font-bold text-navy-900 mb-3 md:mb-4">What Is the CPR Challenge?</h2>
+                <p class="text-gray-700 mb-3 text-sm md:text-base">
                     The NH CPR Challenge is a bipartisan initiative by New Hampshire's five Executive Councilors to train as many
                     Granite Staters as possible in Hands-Only CPR during <strong>EMS Week 2026 (May 17&ndash;23)</strong>.
                 </p>
-                <p class="text-gray-700 mb-4">
+                <p class="text-gray-700 mb-3 text-sm md:text-base">
                     Each Executive Council district is competing to see who can train the most people. All trainings are
                     <strong>completely free</strong> and take just <strong>15&ndash;20 minutes</strong>. No prior experience is needed.
                 </p>
-                <p class="text-gray-700">
+                <p class="text-gray-700 text-sm md:text-base">
                     The goal: give every New Hampshire resident the confidence to act if they witness a cardiac arrest.
                     You don't need to be a medical professional&mdash;you just need to know two steps.
                 </p>
             </section>
 
             <!-- Hands-Only CPR -->
-            <section class="bg-white border border-gray-200 p-6 md:p-8">
-                <h2 class="font-serif text-2xl font-bold text-navy-900 mb-4">What Is Hands-Only CPR?</h2>
-                <p class="text-gray-700 mb-6">
+            <section class="bg-white border border-gray-200 p-5 md:p-8">
+                <h2 class="font-serif text-xl md:text-2xl font-bold text-navy-900 mb-3 md:mb-4">What Is Hands-Only CPR?</h2>
+                <p class="text-gray-700 mb-4 text-sm md:text-base">
                     Hands-Only CPR is CPR without mouth-to-mouth breaths. It's recommended for use by people who witness an
                     adult or teen suddenly collapse. It has just two steps:
                 </p>
-                <div class="grid sm:grid-cols-2 gap-4">
-                    <div class="bg-navy-50 p-5">
-                        <p class="text-lg font-bold text-navy-900 mb-2">Step 1: Call 911</p>
-                        <p class="text-gray-700 text-sm">If you see someone suddenly collapse, call 911 immediately (or direct someone nearby to call). Every second counts.</p>
+                <div class="grid sm:grid-cols-2 gap-3 md:gap-4">
+                    <div class="bg-navy-50 p-4 md:p-5">
+                        <p class="text-base md:text-lg font-bold text-navy-900 mb-1.5">Step 1: Call 911</p>
+                        <p class="text-gray-700 text-sm">If you see someone suddenly collapse, call 911 immediately (or direct someone nearby to call).</p>
                     </div>
-                    <div class="bg-navy-50 p-5">
-                        <p class="text-lg font-bold text-navy-900 mb-2">Step 2: Push Hard &amp; Fast</p>
-                        <p class="text-gray-700 text-sm">Place the heel of your hand on the center of the chest. Push hard and fast at 100&ndash;120 compressions per minute. Don't stop until help arrives.</p>
+                    <div class="bg-navy-50 p-4 md:p-5">
+                        <p class="text-base md:text-lg font-bold text-navy-900 mb-1.5">Step 2: Push Hard &amp; Fast</p>
+                        <p class="text-gray-700 text-sm">Push hard and fast in the center of the chest at 100&ndash;120 compressions per minute until help arrives.</p>
                     </div>
                 </div>
-                <p class="text-gray-500 text-sm mt-4">
+                <p class="text-gray-500 text-xs md:text-sm mt-3">
                     <strong>Tip:</strong> Push to the beat of &ldquo;Stayin' Alive&rdquo; by the Bee Gees&mdash;about 100 beats per minute.
                 </p>
             </section>
 
             <!-- FAQ -->
-            <section class="bg-white border border-gray-200 p-6 md:p-8">
-                <h2 class="font-serif text-2xl font-bold text-navy-900 mb-6">Frequently Asked Questions</h2>
-                <div class="space-y-5">
-                    <div class="border-b border-gray-100 pb-4">
-                        <h3 class="font-bold text-navy-900">Is this a real CPR certification?</h3>
-                        <p class="text-gray-700 mt-1 text-sm">No. This is a Hands-Only CPR <em>awareness</em> training. You'll receive a certificate of participation, but it is not an official certification from the American Heart Association or Red Cross. If you need formal certification (for a job, etc.), we encourage you to take a full course.</p>
+            <section class="bg-white border border-gray-200 p-5 md:p-8">
+                <h2 class="font-serif text-xl md:text-2xl font-bold text-navy-900 mb-4 md:mb-6">Frequently Asked Questions</h2>
+                <div class="space-y-4 md:space-y-5">
+                    <div class="border-b border-gray-100 pb-3 md:pb-4">
+                        <h3 class="font-bold text-navy-900 text-sm md:text-base">Is this a real CPR certification?</h3>
+                        <p class="text-gray-700 mt-1 text-sm">No. This is a Hands-Only CPR <em>awareness</em> training. You'll receive a certificate of participation, but it is not an official certification from the AHA or Red Cross.</p>
                     </div>
-                    <div class="border-b border-gray-100 pb-4">
-                        <h3 class="font-bold text-navy-900">Who can attend?</h3>
-                        <p class="text-gray-700 mt-1 text-sm">Anyone! There are no age restrictions or prerequisites. Hands-Only CPR is designed to be accessible to everyone.</p>
+                    <div class="border-b border-gray-100 pb-3 md:pb-4">
+                        <h3 class="font-bold text-navy-900 text-sm md:text-base">Who can attend?</h3>
+                        <p class="text-gray-700 mt-1 text-sm">Anyone! No age restrictions or prerequisites.</p>
                     </div>
-                    <div class="border-b border-gray-100 pb-4">
-                        <h3 class="font-bold text-navy-900">How much does it cost?</h3>
-                        <p class="text-gray-700 mt-1 text-sm">Nothing. All trainings through the NH CPR Challenge are completely free.</p>
+                    <div class="border-b border-gray-100 pb-3 md:pb-4">
+                        <h3 class="font-bold text-navy-900 text-sm md:text-base">How much does it cost?</h3>
+                        <p class="text-gray-700 mt-1 text-sm">Nothing. All trainings are completely free.</p>
                     </div>
-                    <div class="border-b border-gray-100 pb-4">
-                        <h3 class="font-bold text-navy-900">How long does the training take?</h3>
-                        <p class="text-gray-700 mt-1 text-sm">Most sessions are 15&ndash;20 minutes. You'll learn the two steps, practice compressions, and be on your way.</p>
+                    <div class="border-b border-gray-100 pb-3 md:pb-4">
+                        <h3 class="font-bold text-navy-900 text-sm md:text-base">How long does it take?</h3>
+                        <p class="text-gray-700 mt-1 text-sm">15&ndash;20 minutes. Learn the two steps, practice compressions, and you're done.</p>
                     </div>
-                    <div class="border-b border-gray-100 pb-4">
-                        <h3 class="font-bold text-navy-900">Can I host a training?</h3>
-                        <p class="text-gray-700 mt-1 text-sm">Yes! Fire departments, businesses, churches, community organizations, and individuals are all welcome to host. <a href="{{ url_for('host') }}" class="text-navy-600 underline font-medium">Apply here</a>.</p>
+                    <div class="border-b border-gray-100 pb-3 md:pb-4">
+                        <h3 class="font-bold text-navy-900 text-sm md:text-base">Can I host a training?</h3>
+                        <p class="text-gray-700 mt-1 text-sm">Yes! Fire departments, businesses, churches, and community organizations are welcome. <a href="{{ url_for('host') }}" class="text-navy-600 underline font-medium">Apply here</a>.</p>
                     </div>
-                    <div class="border-b border-gray-100 pb-4">
-                        <h3 class="font-bold text-navy-900">What district am I in?</h3>
+                    <div class="border-b border-gray-100 pb-3 md:pb-4">
+                        <h3 class="font-bold text-navy-900 text-sm md:text-base">What district am I in?</h3>
                         <p class="text-gray-700 mt-1 text-sm">Check our <a href="{{ url_for('map_page') }}" class="text-navy-600 underline font-medium">interactive map</a> to find your Executive Council district.</p>
                     </div>
                     <div>
-                        <h3 class="font-bold text-navy-900">What if I can't make it during EMS Week?</h3>
-                        <p class="text-gray-700 mt-1 text-sm">We encourage you to check out the American Heart Association's free online resources at <strong>cpr.heart.org</strong> to learn Hands-Only CPR on your own.</p>
+                        <h3 class="font-bold text-navy-900 text-sm md:text-base">What if I can't make it during EMS Week?</h3>
+                        <p class="text-gray-700 mt-1 text-sm">Check out the American Heart Association's free resources at <strong>cpr.heart.org</strong> to learn on your own.</p>
                     </div>
                 </div>
             </section>
@@ -89,40 +110,17 @@
         <!-- Sidebar column (1/3 width on desktop) -->
         <div class="space-y-6">
 
-            <!-- Why CPR stats -->
-            <section class="bg-cpr-light border border-red-200 p-6">
-                <h2 class="font-serif text-lg font-bold text-cpr-red mb-4">Why This Matters</h2>
-                <div class="space-y-4">
-                    <div class="text-center border-b border-red-100 pb-4">
-                        <p class="text-3xl font-bold text-cpr-red font-serif">350,000+</p>
-                        <p class="text-gray-700 text-xs mt-1">cardiac arrests outside hospitals each year in the U.S.</p>
-                    </div>
-                    <div class="text-center border-b border-red-100 pb-4">
-                        <p class="text-3xl font-bold text-cpr-red font-serif">2&ndash;3x</p>
-                        <p class="text-gray-700 text-xs mt-1">increased survival when a bystander performs CPR</p>
-                    </div>
-                    <div class="text-center pb-2">
-                        <p class="text-3xl font-bold text-cpr-red font-serif">~10%</p>
-                        <p class="text-gray-700 text-xs mt-1">current survival rate&mdash;we can do better</p>
-                    </div>
-                </div>
-                <p class="text-gray-600 text-xs mt-4 leading-relaxed">
-                    For every minute without CPR, survival drops 7&ndash;10%. Bystander CPR can double or triple the chance of survival.
-                </p>
-            </section>
-
             <!-- The Councilors -->
-            <section class="bg-navy-50 border border-navy-100 p-6">
-                <h2 class="font-serif text-lg font-bold text-navy-900 mb-4">The Executive Council</h2>
-                <p class="text-gray-600 text-xs mb-4">All five councilors are working together on the CPR Challenge.</p>
-                <div class="space-y-3">
+            <section class="bg-navy-50 border border-navy-100 p-5 md:p-6">
+                <h2 class="font-serif text-lg font-bold text-navy-900 mb-3 md:mb-4">The Executive Council</h2>
+                <p class="text-gray-600 text-xs mb-3">All five councilors are working together on the CPR Challenge.</p>
+                <div class="grid grid-cols-2 gap-2 md:grid-cols-1 md:gap-3">
                     {% for d in range(1, 6) %}
-                    <div class="flex items-center gap-3 bg-white p-3 border border-gray-100">
-                        <img src="{{ councilors[d]['photo'] }}" alt="{{ councilors[d]['name'] }}" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0">
+                    <div class="flex items-center gap-2 md:gap-3 bg-white p-2.5 md:p-3 border border-gray-100 {% if d == 5 %}col-span-2 md:col-span-1 max-w-[50%] md:max-w-none mx-auto md:mx-0{% endif %}">
+                        <img src="{{ councilors[d]['photo'] }}" alt="{{ councilors[d]['name'] }}" class="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0">
                         <div class="min-w-0">
-                            <p class="font-bold text-navy-900 text-sm">{{ councilors[d]['name'] }}</p>
+                            <p class="font-bold text-navy-900 text-xs md:text-sm leading-tight">{{ councilors[d]['name'] }}</p>
                             <p class="text-xs font-medium" style="color: {{ district_colors[d] }}">District {{ d }}</p>
-                            <p class="text-xs text-gray-500 leading-snug truncate">{{ councilors[d]['district_desc'][:60] }}...</p>
                         </div>
                     </div>
                     {% endfor %}
@@ -130,7 +128,7 @@
             </section>
 
             <!-- CTA -->
-            <section class="bg-navy-900 text-white p-6 text-center">
+            <section class="bg-navy-900 text-white p-5 md:p-6 text-center">
                 <h3 class="font-serif font-bold mb-2">Ready to Learn?</h3>
                 <p class="text-navy-200 text-sm mb-4">It takes just 15 minutes.</p>
                 <a href="{{ url_for('trainings') }}" class="block bg-gold hover:bg-gold-dark text-navy-900 font-bold py-3 px-4 text-sm uppercase tracking-wide transition">Find a Training</a>
