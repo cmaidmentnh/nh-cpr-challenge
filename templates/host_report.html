@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-navy-900 mb-2">Report Attendance</h1>
+    <h1 class="font-serif text-3xl font-bold text-navy-900 mb-2">Report Attendance</h1>
     <p class="text-gray-600 mb-6">Thank you for hosting a CPR training, {{ training.host_name }}!</p>
 
     <!-- Training Details -->
@@ -16,7 +16,7 @@
     {% if existing_report %}
     <!-- Already reported -->
     <div class="bg-green-50 rounded-xl p-8 text-center border border-green-200">
-        <div class="text-4xl mb-3">&#9989;</div>
+        <svg class="w-12 h-12 text-green-600 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         <h2 class="text-xl font-bold text-green-800 mb-2">Attendance Already Reported</h2>
         <p class="text-green-700">You reported <strong>{{ existing_report.reported_count }}</strong> attendees.</p>
         {% if not existing_report.approved %}

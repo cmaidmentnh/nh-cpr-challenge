@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-navy-900 mb-2">Host a Free CPR Training</h1>
+    <h1 class="font-serif text-3xl font-bold text-navy-900 mb-2">Host a Free CPR Training</h1>
     <p class="text-gray-600 mb-8">Thank you for helping keep New Hampshire safe! Fill out the form below to apply to host a free Hands-Only CPR training during EMS Week (May 17&ndash;23, 2026). We'll review your application and get back to you.</p>
 
     <form method="POST" class="bg-white rounded-xl shadow-md p-8 space-y-6">
@@ -55,13 +55,13 @@
 
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Executive Council District *</label>
-            <select name="district" required class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-navy-500 focus:border-navy-500">
+            <select name="district" id="district-select" required class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-navy-500 focus:border-navy-500">
                 <option value="">Select your district...</option>
                 {% for d in range(1, 6) %}
                 <option value="{{ d }}">District {{ d }} &mdash; {{ councilors[d]['name'] }}</option>
                 {% endfor %}
             </select>
-            <p class="text-xs text-gray-400 mt-1">Not sure? <a href="{{ url_for('map_page') }}" class="text-navy-600 underline">Check the map</a></p>
+            <p id="district-detect-msg" class="text-xs text-gray-400 mt-1">Not sure? <a href="{{ url_for('map_page') }}" class="text-navy-600 underline">Check the map</a> &mdash; or enter your city/zip above and we'll detect it automatically.</p>
         </div>
 
         <div class="grid md:grid-cols-3 gap-4">
@@ -103,4 +103,57 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+    const cityInput = document.querySelector('input[name="city"]');
+    const zipInput = document.querySelector('input[name="zip_code"]');
+    const districtSelect = document.getElementById('district-select');
+    const detectMsg = document.getElementById('district-detect-msg');
+    let detectTimer = null;
+
+    function detectDistrict() {
+        const city = (cityInput ? cityInput.value.trim() : '');
+        const zip = (zipInput ? zipInput.value.trim() : '');
+        if (!city && !zip) return;
+
+        const query = (city ? city + ', ' : '') + 'NH' + (zip ? ' ' + zip : '');
+        detectMsg.innerHTML = '<span class="text-navy-600">Detecting district...</span>';
+
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=1&countrycodes=us')
+            .then(r => r.json())
+            .then(results => {
+                if (!results.length) {
+                    detectMsg.innerHTML = 'Could not detect district. <a href="/map" class="text-navy-600 underline">Check the map</a>';
+                    return;
+                }
+                const lat = parseFloat(results[0].lat);
+                const lng = parseFloat(results[0].lon);
+                return fetch('/api/detect-district?lat=' + lat + '&lng=' + lng);
+            })
+            .then(r => r ? r.json() : null)
+            .then(data => {
+                if (data && data.district) {
+                    districtSelect.value = data.district;
+                    detectMsg.innerHTML = '<svg class="w-4 h-4 text-green-600 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span class="text-green-600">Detected: District ' + data.district + ' &mdash; ' + data.councilor + '</span>';
+                } else if (data) {
+                    detectMsg.innerHTML = 'Could not determine district. <a href="/map" class="text-navy-600 underline">Check the map</a>';
+                }
+            })
+            .catch(() => {
+                detectMsg.innerHTML = 'Not sure? <a href="/map" class="text-navy-600 underline">Check the map</a>';
+            });
+    }
+
+    function scheduleDetect() {
+        clearTimeout(detectTimer);
+        detectTimer = setTimeout(detectDistrict, 800);
+    }
+
+    if (cityInput) cityInput.addEventListener('blur', scheduleDetect);
+    if (zipInput) zipInput.addEventListener('blur', scheduleDetect);
+})();
+</script>
 {% endblock %}

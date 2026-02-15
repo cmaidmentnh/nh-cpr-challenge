@@ -109,6 +109,26 @@ def send_rsvp_notification_to_host(rsvp, training):
     send_email(training.host_email, f'New RSVP for your CPR training - {rsvp.name}', html)
 
 
+def send_host_application_received(training):
+    """Confirm to host that their application was received."""
+    html = _email_wrapper(f"""
+<h2 style="color:#1e3a5f;margin-top:0;">Application Received</h2>
+<p>Hi {training.host_name},</p>
+<p>Thank you for applying to host a free Hands-Only CPR training through the NH CPR Challenge! We've received your application and will review it shortly.</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0;">
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Location</td>
+<td style="padding:8px;">{training.location_name}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Date</td>
+<td style="padding:8px;">{training.date.strftime('%A, %B %d, %Y')}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">City</td>
+<td style="padding:8px;">{training.city or 'Not specified'}</td></tr>
+</table>
+<p>You'll receive another email once your training has been approved and is listed on the website.</p>
+<p style="color:#64748b;font-size:13px;">If you have any questions, reply to this email.</p>
+""")
+    send_email(training.host_email, 'CPR Training Application Received', html)
+
+
 def send_training_approved(training):
     """Notify host their training was approved. Includes host portal link."""
     app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')

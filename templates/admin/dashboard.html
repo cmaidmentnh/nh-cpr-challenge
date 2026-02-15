@@ -9,7 +9,7 @@
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <div class="bg-white rounded-xl shadow-sm p-6">
             <p class="text-sm text-gray-500">Total Trained</p>
             <p class="text-3xl font-bold text-navy-900">{{ "{:,}".format(total_trained) }}</p>
@@ -27,6 +27,10 @@
         <div class="bg-white rounded-xl shadow-sm p-6">
             <p class="text-sm text-gray-500">Completed Events</p>
             <p class="text-3xl font-bold text-navy-900">{{ completed }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <p class="text-sm text-gray-500">Subscribers</p>
+            <p class="text-3xl font-bold text-navy-900">{{ total_subscribers }}</p>
         </div>
     </div>
 
@@ -51,7 +55,7 @@
             <div class="space-y-2">
                 {% if pending > 0 %}
                 <a href="{{ url_for('admin_trainings', status='pending') }}" class="block bg-orange-50 text-orange-800 p-3 rounded-lg hover:bg-orange-100 transition">
-                    &#9888;&#65039; {{ pending }} training{{ 's' if pending != 1 }} pending approval
+                    <svg class="w-5 h-5 text-orange-500 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {{ pending }} training{{ 's' if pending != 1 }} pending approval
                 </a>
                 {% endif %}
                 <a href="{{ url_for('admin_trainings') }}" class="block bg-navy-50 text-navy-800 p-3 rounded-lg hover:bg-navy-100 transition">
@@ -68,6 +72,9 @@
                 </a>
                 <a href="{{ url_for('admin_export_csv', data_type='certificates') }}" class="block bg-gray-50 text-gray-700 p-3 rounded-lg hover:bg-gray-100 transition">
                     Export Certificates CSV
+                </a>
+                <a href="{{ url_for('admin_export_csv', data_type='subscribers') }}" class="block bg-gray-50 text-gray-700 p-3 rounded-lg hover:bg-gray-100 transition">
+                    Export Subscribers CSV
                 </a>
             </div>
         </div>

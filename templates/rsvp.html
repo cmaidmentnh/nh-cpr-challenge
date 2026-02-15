@@ -44,7 +44,7 @@
     {% if training.is_full %}
     <!-- Full -->
     <div class="bg-red-50 rounded-xl p-8 text-center border border-red-200">
-        <div class="text-4xl mb-3">&#128532;</div>
+        <svg class="w-12 h-12 text-red-400 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="3" stroke-linecap="round"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="3" stroke-linecap="round"/></svg>
         <h2 class="text-xl font-bold text-red-800 mb-2">This Training is Full</h2>
         <p class="text-red-600 mb-4">All {{ training.capacity }} spots have been filled.</p>
         <a href="{{ url_for('trainings') }}" class="inline-block bg-navy-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-navy-800 transition">Find Another Training</a>
@@ -69,14 +69,10 @@
             <input type="tel" name="phone" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-navy-500 focus:border-navy-500">
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Which district do you live in?</label>
-            <select name="district" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-navy-500 focus:border-navy-500">
-                <option value="">Not sure / skip</option>
-                {% for d in range(1, 6) %}
-                <option value="{{ d }}">District {{ d }} &mdash; {{ councilors[d]['name'] }}</option>
-                {% endfor %}
-            </select>
-            <p class="text-xs text-gray-400 mt-1">This helps us track the challenge by district. <a href="{{ url_for('map_page') }}" class="text-navy-600 underline">Check the map</a></p>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Your Zip Code (to detect your district)</label>
+            <input type="text" name="zip_for_district" id="rsvp-zip" maxlength="5" placeholder="e.g., 03301" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-navy-500 focus:border-navy-500">
+            <p id="rsvp-district-msg" class="text-xs text-gray-400 mt-1">Enter your zip code and we'll detect your Executive Council district.</p>
+            <input type="hidden" name="district" id="rsvp-district-hidden" value="">
         </div>
 
         <button type="submit" class="w-full bg-gold hover:bg-gold-dark text-navy-900 font-bold py-3 px-8 rounded-lg text-lg transition">
@@ -84,5 +80,68 @@
         </button>
     </form>
     {% endif %}
+
+    <!-- Keep Me Updated -->
+    <div class="mt-8 bg-navy-50 rounded-xl p-6 border border-navy-100">
+        <h3 class="font-serif font-bold text-navy-900 mb-2">Stay Updated</h3>
+        <p class="text-sm text-gray-600 mb-4">Want to hear about new trainings in your area? Sign up and we'll let you know.</p>
+        <form method="POST" action="{{ url_for('subscribe') }}" class="flex flex-col sm:flex-row gap-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="email" name="email" required placeholder="Your email" class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-navy-500 focus:border-navy-500">
+            <select name="district" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-navy-500 focus:border-navy-500">
+                <option value="">Any district</option>
+                {% for d in range(1, 6) %}
+                <option value="{{ d }}">District {{ d }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="bg-navy-900 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-navy-800 transition whitespace-nowrap">Notify Me</button>
+        </form>
+    </div>
 </div>
+
+{% block extra_scripts %}
+<script>
+(function() {
+    const zipInput = document.getElementById('rsvp-zip');
+    const hiddenDistrict = document.getElementById('rsvp-district-hidden');
+    const msg = document.getElementById('rsvp-district-msg');
+    if (!zipInput) return;
+
+    let timer = null;
+    function detectFromZip() {
+        const zip = zipInput.value.trim();
+        if (zip.length < 5) return;
+
+        msg.innerHTML = '<span class="text-navy-600">Detecting district...</span>';
+
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=NH+' + encodeURIComponent(zip) + '&limit=1&countrycodes=us')
+            .then(r => r.json())
+            .then(results => {
+                if (!results.length) {
+                    msg.innerHTML = '<span class="text-gray-400">Could not find that zip code.</span>';
+                    return;
+                }
+                const lat = parseFloat(results[0].lat);
+                const lng = parseFloat(results[0].lon);
+                return fetch('/api/detect-district?lat=' + lat + '&lng=' + lng);
+            })
+            .then(r => r ? r.json() : null)
+            .then(data => {
+                if (data && data.district) {
+                    hiddenDistrict.value = data.district;
+                    msg.innerHTML = '<svg class="w-4 h-4 text-green-600 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span class="text-green-600">District ' + data.district + ' &mdash; ' + data.councilor + '</span>';
+                } else if (data) {
+                    msg.innerHTML = '<span class="text-gray-400">Could not determine district.</span>';
+                }
+            })
+            .catch(() => {});
+    }
+
+    zipInput.addEventListener('input', function() {
+        clearTimeout(timer);
+        timer = setTimeout(detectFromZip, 600);
+    });
+    zipInput.addEventListener('blur', detectFromZip);
+})();
+</script>
 {% endblock %}

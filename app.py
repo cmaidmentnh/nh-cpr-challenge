@@ -17,9 +17,10 @@ from flask_limiter.util import get_remote_address
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
-from models import db, Training, RSVP, Attendance, Certificate, Settings, COUNCILORS, DISTRICT_COLORS
+from models import db, Training, RSVP, Attendance, Certificate, Settings, Subscriber, COUNCILORS, DISTRICT_COLORS
 from emails import (send_rsvp_confirmation, send_rsvp_notification_to_host,
-                    send_training_approved, send_certificate_ready)
+                    send_training_approved, send_certificate_ready,
+                    send_host_application_received)
 from certificates import generate_certificate
 from geocode import geocode_address
 
@@ -169,7 +170,13 @@ def host():
         )
         db.session.add(training)
         db.session.commit()
-        flash('Thank you! Your training application has been submitted and is pending review.', 'success')
+
+        try:
+            send_host_application_received(training)
+        except Exception as e:
+            print(f"Host confirmation email error: {e}")
+
+        flash('Thank you! Your training application has been submitted and is pending review. Check your email for confirmation.', 'success')
         return redirect(url_for('host'))
     return render_template('host.html')
 
@@ -237,6 +244,31 @@ def leaderboard():
                            goal=goal)
 
 
+@app.route('/subscribe', methods=['POST'])
+@limiter.limit('10 per hour', methods=['POST'])
+def subscribe():
+    email = request.form.get('email', '').strip().lower()
+    district = request.form.get('district', type=int)
+
+    if not email:
+        flash('Please enter your email address.', 'error')
+        return redirect(request.referrer or url_for('trainings'))
+
+    existing = Subscriber.query.filter_by(email=email).first()
+    if existing:
+        if district and existing.district != district:
+            existing.district = district
+            db.session.commit()
+        flash("You're already on the list! We'll keep you updated.", 'info')
+    else:
+        sub = Subscriber(email=email, district=district)
+        db.session.add(sub)
+        db.session.commit()
+        flash("You're signed up! We'll notify you when trainings are posted in your area.", 'success')
+
+    return redirect(request.referrer or url_for('trainings'))
+
+
 # =========================================================================
 # API ROUTES
 # =========================================================================
@@ -273,6 +305,53 @@ def api_districts():
 @app.route('/api/ec-districts.geojson')
 def api_geojson():
     return send_file('static/data/ec-districts.geojson', mimetype='application/json')
+
+
+@csrf.exempt
+@app.route('/api/detect-district')
+def api_detect_district():
+    """Detect EC district from lat/lng using point-in-polygon on GeoJSON."""
+    lat = request.args.get('lat', type=float)
+    lng = request.args.get('lng', type=float)
+    if lat is None or lng is None:
+        return jsonify({'error': 'lat and lng required'}), 400
+
+    import json
+    geojson_path = os.path.join(app.static_folder, 'data', 'ec-districts.geojson')
+    with open(geojson_path) as f:
+        geojson = json.load(f)
+
+    for feature in geojson['features']:
+        district = feature['properties']['district']
+        geom = feature['geometry']
+        if _point_in_geometry(lng, lat, geom):
+            return jsonify({'district': district, 'councilor': COUNCILORS[district]['name']})
+
+    return jsonify({'district': None})
+
+
+def _point_in_geometry(x, y, geometry):
+    """Check if point (x,y) is inside a GeoJSON geometry (Polygon or MultiPolygon)."""
+    if geometry['type'] == 'Polygon':
+        return _point_in_polygon(x, y, geometry['coordinates'])
+    elif geometry['type'] == 'MultiPolygon':
+        return any(_point_in_polygon(x, y, poly) for poly in geometry['coordinates'])
+    return False
+
+
+def _point_in_polygon(x, y, coordinates):
+    """Ray-casting algorithm for point-in-polygon. coordinates is a list of rings."""
+    ring = coordinates[0]  # exterior ring
+    n = len(ring)
+    inside = False
+    j = n - 1
+    for i in range(n):
+        xi, yi = ring[i]
+        xj, yj = ring[j]
+        if ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi) + xi):
+            inside = not inside
+        j = i
+    return inside
 
 
 # =========================================================================
@@ -368,6 +447,7 @@ def admin_dashboard():
     approved = Training.query.filter_by(status='approved').count()
     completed = Training.query.filter_by(status='completed').count()
     total_rsvps = RSVP.query.count()
+    total_subscribers = Subscriber.query.count()
     district_counts = get_district_counts()
     total_trained = sum(district_counts.values())
     goal = int(get_setting('goal_target', '1000'))
@@ -379,6 +459,7 @@ def admin_dashboard():
                            approved=approved,
                            completed=completed,
                            total_rsvps=total_rsvps,
+                           total_subscribers=total_subscribers,
                            district_counts=district_counts,
                            total_trained=total_trained,
                            goal=goal,
@@ -545,6 +626,11 @@ def admin_export_csv(data_type):
             writer.writerow([c.certificate_number, c.rsvp.name, c.rsvp.email,
                               c.rsvp.training.location_name, c.rsvp.training.date,
                               c.issued_at, c.downloaded])
+
+    elif data_type == 'subscribers':
+        writer.writerow(['ID', 'Email', 'District', 'Signed Up'])
+        for s in Subscriber.query.order_by(Subscriber.created_at).all():
+            writer.writerow([s.id, s.email, s.district or 'Any', s.created_at])
     else:
         abort(404)
 

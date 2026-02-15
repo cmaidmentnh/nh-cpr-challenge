@@ -46,7 +46,7 @@
                     {% if att %}
                     <p class="text-sm mt-2 {% if att.approved %}text-green-600{% else %}text-orange-500{% endif %}">
                         Attendance: {{ att.reported_count }} ({{ att.reported_by }})
-                        {% if att.approved %} &#9989; Approved{% else %} &#9203; Pending{% endif %}
+                        {% if att.approved %} <svg class="w-4 h-4 text-green-600 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Approved{% else %} <svg class="w-4 h-4 text-orange-500 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Pending{% endif %}
                     </p>
                     {% endif %}
                 </div>

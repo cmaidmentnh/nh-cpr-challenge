@@ -7,11 +7,51 @@ db = SQLAlchemy()
 
 # Executive Councilors (2025-2026)
 COUNCILORS = {
-    1: {'name': 'Joseph Kenney', 'party': 'R'},
-    2: {'name': 'Karen Liot Hill', 'party': 'D'},
-    3: {'name': 'Janet Stevens', 'party': 'R'},
-    4: {'name': 'John Stephen', 'party': 'R'},
-    5: {'name': 'Dave Wheeler', 'party': 'R'},
+    1: {
+        'name': 'Joseph Kenney',
+        'party': 'R',
+        'photo': 'https://img1.wsimg.com/isteam/ip/23893cc3-a682-414b-b986-d7c49394301a/kenny.jpeg',
+        'bio': 'Lt. Col. USMC (Ret.) first elected in a 2014 special election. Former NH State Senator and State Representative, now serving his fifth term on the Executive Council.',
+        'email': 'Joseph.D.Kenney@nh.gov',
+        'phone': '(603) 271-3632',
+        'district_desc': 'Northern and western NH — Coos, Grafton, and parts of Belknap, Carroll, Merrimack, and Sullivan Counties.',
+    },
+    2: {
+        'name': 'Karen Liot Hill',
+        'party': 'D',
+        'photo': 'https://img1.wsimg.com/isteam/ip/23893cc3-a682-414b-b986-d7c49394301a/karen-liot-hill-headshot.png',
+        'bio': 'Dartmouth Class of 2000, 20-year Lebanon City Councilor, former Mayor of Lebanon, and four-term Grafton County Treasurer. Elected in 2024.',
+        'email': 'Karen.LiotHill@nh.gov',
+        'phone': '(603) 271-3632',
+        'district_desc': 'Capital region and western NH — 81 cities and towns including Concord, Keene, Lebanon, and Hanover.',
+    },
+    3: {
+        'name': 'Janet Stevens',
+        'party': 'R',
+        'photo': 'https://img1.wsimg.com/isteam/ip/23893cc3-a682-414b-b986-d7c49394301a/stevens-sq.jpg',
+        'bio': 'Rye resident and small business owner with 29+ years of public service. First elected in 2020, she became the second Republican woman on the Council since 1913.',
+        'email': 'Janet.L.Stevens@nh.gov',
+        'phone': '(603) 271-3632',
+        'district_desc': 'Seacoast and southeast NH — 32 towns and cities including Portsmouth, Exeter, Hampton, Derry, and Salem.',
+    },
+    4: {
+        'name': 'John Stephen',
+        'party': 'R',
+        'photo': 'https://img1.wsimg.com/isteam/ip/23893cc3-a682-414b-b986-d7c49394301a/john-stephen-headshot.png',
+        'bio': 'Manchester attorney and healthcare reformer. Former Commissioner of NH DHHS and Deputy Commissioner of NH Dept. of Safety. Elected in 2024.',
+        'email': 'John.A.Stephen@nh.gov',
+        'phone': '(603) 271-3632',
+        'district_desc': 'Manchester and surrounding communities — 20 cities and towns including Bedford, Goffstown, Londonderry, and Hooksett.',
+    },
+    5: {
+        'name': 'Dave Wheeler',
+        'party': 'R',
+        'photo': 'https://img1.wsimg.com/isteam/ip/23893cc3-a682-414b-b986-d7c49394301a/wheeler-sq.jpg',
+        'bio': 'Milford resident and longest-serving current Councilor, now in his eighth term. Former State Senator and State Representative.',
+        'email': 'David.K.Wheeler@nh.gov',
+        'phone': '(603) 271-3632',
+        'district_desc': 'Southern NH and Monadnock region — 35 towns including Nashua, Hudson, Merrimack, Milford, and Hollis.',
+    },
 }
 
 # District colors for map
@@ -121,6 +161,15 @@ class Certificate(db.Model):
     certificate_number = db.Column(db.String(20), unique=True, nullable=False)
     issued_at = db.Column(db.DateTime, default=datetime.utcnow)
     downloaded = db.Column(db.Boolean, default=False)
+
+
+class Subscriber(db.Model):
+    __tablename__ = 'subscribers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(200), nullable=False, unique=True)
+    district = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Settings(db.Model):
