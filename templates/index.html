@@ -41,15 +41,7 @@
                     <p class="text-6xl font-serif font-bold text-gold">{{ "{:,}".format(goal) }}</p>
                     <p class="text-navy-300 text-sm mt-2 mb-6">Granite Staters trained in CPR</p>
                     <div class="border-t border-navy-600 pt-5">
-                        <div class="grid grid-cols-5 gap-1">
-                            {% for d in range(1, 6) %}
-                            <div>
-                                <div class="w-2 h-2 rounded-full mx-auto mb-1" style="background-color: {{ district_colors[d] }}"></div>
-                                <p class="text-xs text-navy-400">D{{ d }}</p>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <p class="text-xs text-navy-500 mt-3">Across all 5 Executive Council districts</p>
+                        <p class="text-xs text-navy-400 uppercase tracking-wider">Across all 5 Executive Council districts</p>
                     </div>
                 </div>
             </div>
