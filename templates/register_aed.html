@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Register Your AED{% endblock %}
-{% block meta_description %}Register your Automated External Defibrillator (AED) with New Hampshire 911. Registered AEDs help dispatchers direct callers to the nearest device during cardiac emergencies. Required by NH law.{% endblock %}
+{% block title %}AEDs in New Hampshire — Buy, Place &amp; Register{% endblock %}
+{% block meta_description %}Get an AED for your business, school, or organization and register it with NH 911. Registered AEDs help dispatchers direct callers to the nearest device. AED purchase guide, benefits, and NH registration requirements.{% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 py-6 md:py-8">
-    <h1 class="font-serif text-2xl md:text-3xl font-bold text-navy-900 mb-6 md:mb-8">Register Your AED</h1>
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-navy-900 mb-6 md:mb-8">AEDs in New Hampshire</h1>
 
     <!-- Urgency banner -->
     <section class="bg-cpr-light border border-red-200 p-4 md:p-6 mb-6 md:mb-8">
@@ -97,6 +97,88 @@
                 </div>
             </section>
 
+            <!-- Why your business needs an AED -->
+            <section class="bg-white border border-gray-200 p-5 md:p-8">
+                <h2 class="font-serif text-xl md:text-2xl font-bold text-navy-900 mb-3 md:mb-4">Why Your Business Needs an AED</h2>
+                <p class="text-gray-700 mb-4 text-sm md:text-base">
+                    Sudden cardiac arrest can happen to anyone, anywhere&mdash;in offices, retail stores, restaurants, gyms, and churches.
+                    Having an AED on-site and knowing how to use it can mean the difference between life and death.
+                </p>
+                <div class="grid sm:grid-cols-2 gap-3 md:gap-4 mb-4">
+                    <div class="bg-navy-50 p-4">
+                        <p class="font-bold text-navy-900 text-sm mb-1">Saves Lives</p>
+                        <p class="text-gray-600 text-sm">CPR alone has about a 10% survival rate. CPR combined with an AED within the first few minutes raises survival to <strong>over 70%</strong>.</p>
+                    </div>
+                    <div class="bg-navy-50 p-4">
+                        <p class="font-bold text-navy-900 text-sm mb-1">Anyone Can Use One</p>
+                        <p class="text-gray-600 text-sm">Modern AEDs give clear voice prompts and visual instructions. They analyze the heart rhythm automatically&mdash;you can't shock someone who doesn't need it.</p>
+                    </div>
+                    <div class="bg-navy-50 p-4">
+                        <p class="font-bold text-navy-900 text-sm mb-1">Liability Protection</p>
+                        <p class="text-gray-600 text-sm">NH law (RSA 508:12) provides Good Samaritan protection. Businesses that maintain an AED are shielded from civil liability except for gross negligence.</p>
+                    </div>
+                    <div class="bg-navy-50 p-4">
+                        <p class="font-bold text-navy-900 text-sm mb-1">Minutes Matter</p>
+                        <p class="text-gray-600 text-sm">Average EMS response time in NH is 7&ndash;10 minutes. For every minute without defibrillation, survival drops 7&ndash;10%. Your AED bridges the gap.</p>
+                    </div>
+                </div>
+                <p class="text-gray-500 text-xs">
+                    Under NH law (RSA 153-A:32), AED owners must register the device with the Department of Safety within 30 days of acquisition and ensure anticipated users receive CPR/AED training.
+                </p>
+            </section>
+
+            <!-- Where to buy -->
+            <section id="buy-aed" class="bg-white border border-gray-200 p-5 md:p-8">
+                <h2 class="font-serif text-xl md:text-2xl font-bold text-navy-900 mb-3 md:mb-4">Where to Buy an AED</h2>
+                <p class="text-gray-700 mb-4 text-sm md:text-base">
+                    A new AED typically costs <strong>$1,200&ndash;$3,000</strong> depending on the model and features. All FDA-approved AEDs are designed
+                    for use by non-medical bystanders with clear voice instructions. Here are the major brands and where to purchase:
+                </p>
+                <div class="space-y-3 mb-4">
+                    <div class="border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                            <p class="font-bold text-navy-900 text-sm">Philips HeartStart</p>
+                            <p class="text-gray-600 text-xs">Industry standard. Voice-guided, rugged, SMART Pads for adults and children. Widely used in schools and businesses.</p>
+                        </div>
+                        <a href="https://www.usa.philips.com/healthcare/aeds-and-monitor-defibrillators/automated-external-defibrillators-aeds" target="_blank" rel="noopener noreferrer" class="text-navy-600 text-xs font-bold underline whitespace-nowrap">Philips.com &rarr;</a>
+                    </div>
+                    <div class="border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                            <p class="font-bold text-navy-900 text-sm">ZOLL AED Plus / AED 3</p>
+                            <p class="text-gray-600 text-xs">Real-time CPR feedback with compression depth indicator. Audio and visual prompts. Full-rescue AED that coaches through CPR too.</p>
+                        </div>
+                        <a href="https://www.zoll.com/products/aeds" target="_blank" rel="noopener noreferrer" class="text-navy-600 text-xs font-bold underline whitespace-nowrap">Zoll.com &rarr;</a>
+                    </div>
+                    <div class="border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                            <p class="font-bold text-navy-900 text-sm">Avive Connect AED</p>
+                            <p class="text-gray-600 text-xs">Smallest and lightest FDA-approved AED (2.1 lbs). Built-in rechargeable battery eliminates replacement costs. Connected via cellular.</p>
+                        </div>
+                        <a href="https://store.avive.life/" target="_blank" rel="noopener noreferrer" class="text-navy-600 text-xs font-bold underline whitespace-nowrap">Avive.life &rarr;</a>
+                    </div>
+                    <div class="border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                            <p class="font-bold text-navy-900 text-sm">Defibtech Lifeline</p>
+                            <p class="text-gray-600 text-xs">Simple two-button design. Rugged and reliable. Popular in government buildings, airports, and public spaces.</p>
+                        </div>
+                        <a href="https://www.defibtech.com/" target="_blank" rel="noopener noreferrer" class="text-navy-600 text-xs font-bold underline whitespace-nowrap">Defibtech.com &rarr;</a>
+                    </div>
+                </div>
+                <p class="text-gray-700 text-sm md:text-base mb-3">
+                    AEDs are also available from authorized retailers:
+                </p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <a href="https://www.aedsuperstore.com/" target="_blank" rel="noopener noreferrer" class="border border-gray-300 hover:border-navy-500 text-navy-700 text-xs font-medium px-3 py-1.5 transition">AED Superstore</a>
+                    <a href="https://aed.us/" target="_blank" rel="noopener noreferrer" class="border border-gray-300 hover:border-navy-500 text-navy-700 text-xs font-medium px-3 py-1.5 transition">AED.us</a>
+                    <a href="https://www.heartsmart.com/" target="_blank" rel="noopener noreferrer" class="border border-gray-300 hover:border-navy-500 text-navy-700 text-xs font-medium px-3 py-1.5 transition">Heartsmart</a>
+                    <a href="https://www.aedbrands.com/" target="_blank" rel="noopener noreferrer" class="border border-gray-300 hover:border-navy-500 text-navy-700 text-xs font-medium px-3 py-1.5 transition">AED Brands</a>
+                    <a href="https://www.amazon.com/s?k=AED+defibrillator" target="_blank" rel="noopener noreferrer" class="border border-gray-300 hover:border-navy-500 text-navy-700 text-xs font-medium px-3 py-1.5 transition">Amazon</a>
+                </div>
+                <div class="bg-navy-50 p-4">
+                    <p class="text-navy-900 text-sm"><strong>Remember:</strong> After purchasing an AED in New Hampshire, you must register it with the Department of Safety within 30 days (RSA 153-A:32) and ensure anticipated users receive CPR/AED training.</p>
+                </div>
+            </section>
+
             <!-- FAQ -->
             <section class="bg-white border border-gray-200 p-5 md:p-8">
                 <h2 class="font-serif text-xl md:text-2xl font-bold text-navy-900 mb-4 md:mb-6">AED Registration FAQ</h2>
@@ -149,6 +231,31 @@
                    class="block mt-4 bg-navy-900 hover:bg-navy-800 text-white font-bold py-3 px-4 text-sm uppercase tracking-wide transition text-center">
                     Register Now
                 </a>
+            </section>
+
+            <!-- Get an AED -->
+            <section class="bg-gold/10 border border-gold p-5 md:p-6">
+                <h2 class="font-serif text-lg font-bold text-navy-900 mb-3">Don't Have an AED?</h2>
+                <p class="text-gray-700 text-sm mb-2">New AEDs start around <strong>$1,200</strong>. They require no medical training to use and last 5&ndash;10 years.</p>
+                <ul class="text-sm text-gray-700 space-y-1.5 mb-3">
+                    <li class="flex items-start gap-1.5">
+                        <span class="text-gold-dark font-bold mt-0.5">&bull;</span>
+                        <span>Voice-guided&mdash;anyone can use it</span>
+                    </li>
+                    <li class="flex items-start gap-1.5">
+                        <span class="text-gold-dark font-bold mt-0.5">&bull;</span>
+                        <span>Can't accidentally harm someone</span>
+                    </li>
+                    <li class="flex items-start gap-1.5">
+                        <span class="text-gold-dark font-bold mt-0.5">&bull;</span>
+                        <span>NH Good Samaritan protection</span>
+                    </li>
+                    <li class="flex items-start gap-1.5">
+                        <span class="text-gold-dark font-bold mt-0.5">&bull;</span>
+                        <span>Raises cardiac arrest survival to 70%+</span>
+                    </li>
+                </ul>
+                <a href="#buy-aed" class="block bg-navy-900 hover:bg-navy-800 text-white font-bold py-3 px-4 text-sm uppercase tracking-wide transition text-center">Where to Buy</a>
             </section>
 
             <!-- Contact DESC -->
