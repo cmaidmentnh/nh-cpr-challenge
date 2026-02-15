@@ -236,6 +236,11 @@ def about():
     return render_template('about.html')
 
 
+@app.route('/register-aed')
+def register_aed():
+    return render_template('register_aed.html')
+
+
 @app.route('/map')
 def map_page():
     return render_template('map.html')
@@ -678,6 +683,7 @@ def sitemap():
         ('/about', '0.7', 'monthly'),
         ('/map', '0.7', 'monthly'),
         ('/leaderboard', '0.6', 'daily'),
+        ('/register-aed', '0.8', 'monthly'),
     ]
     xml = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']

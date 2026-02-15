@@ -144,6 +144,7 @@
                     <a href="{{ url_for('index') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Home</a>
                     <a href="{{ url_for('trainings') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Find a Training</a>
                     <a href="{{ url_for('host') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Host a Training</a>
+                    <a href="{{ url_for('register_aed') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Register AED</a>
                     {% if show_leaderboard %}<a href="{{ url_for('leaderboard') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Leaderboard</a>{% endif %}
                     <a href="{{ url_for('about') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">About</a>
                 </div>
@@ -160,6 +161,7 @@
             <a href="{{ url_for('index') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Home</a>
             <a href="{{ url_for('trainings') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Find a Training</a>
             <a href="{{ url_for('host') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Host a Training</a>
+            <a href="{{ url_for('register_aed') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Register AED</a>
             {% if show_leaderboard %}<a href="{{ url_for('leaderboard') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Leaderboard</a>{% endif %}
             <a href="{{ url_for('about') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium">About</a>
         </div>
@@ -199,6 +201,7 @@
                     <ul class="text-sm space-y-2">
                         <li><a href="{{ url_for('trainings') }}" class="hover:text-white transition">Find a Training</a></li>
                         <li><a href="{{ url_for('host') }}" class="hover:text-white transition">Host a Training</a></li>
+                        <li><a href="{{ url_for('register_aed') }}" class="hover:text-white transition">Register Your AED</a></li>
                         {% if show_leaderboard %}<li><a href="{{ url_for('leaderboard') }}" class="hover:text-white transition">Leaderboard</a></li>{% endif %}
                         <li><a href="{{ url_for('about') }}" class="hover:text-white transition">About / FAQ</a></li>
                     </ul>
