@@ -20,7 +20,7 @@ def get_ses_client():
 def send_email(to, subject, html_body, plain_body=None):
     """Send an email via SES. Returns True on success."""
     sender_name = os.getenv('SES_SENDER_NAME', 'NH CPR Challenge')
-    sender_email = os.getenv('SES_SENDER_EMAIL', 'info@nhcprchallenge.com')
+    sender_email = os.getenv('SES_SENDER_EMAIL', 'info@cprchallengenh.com')
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
@@ -69,7 +69,7 @@ A bipartisan initiative of the New Hampshire Executive Council
 
 def send_rsvp_confirmation(rsvp, training):
     """Send RSVP confirmation to attendee."""
-    app_url = os.getenv('APP_URL', 'https://nhcprchallenge.com')
+    app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
     html = _email_wrapper(f"""
 <h2 style="color:#1e3a5f;margin-top:0;">You're Registered!</h2>
 <p>Hi {rsvp.name},</p>
@@ -111,7 +111,7 @@ def send_rsvp_notification_to_host(rsvp, training):
 
 def send_training_approved(training):
     """Notify host their training was approved. Includes host portal link."""
-    app_url = os.getenv('APP_URL', 'https://nhcprchallenge.com')
+    app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
     html = _email_wrapper(f"""
 <h2 style="color:#1e3a5f;margin-top:0;">Your Training is Approved!</h2>
 <p>Hi {training.host_name},</p>
@@ -133,7 +133,7 @@ def send_training_approved(training):
 
 def send_certificate_ready(rsvp, certificate):
     """Notify attendee their certificate is available."""
-    app_url = os.getenv('APP_URL', 'https://nhcprchallenge.com')
+    app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
     html = _email_wrapper(f"""
 <h2 style="color:#1e3a5f;margin-top:0;">Your Certificate is Ready!</h2>
 <p>Hi {rsvp.name},</p>

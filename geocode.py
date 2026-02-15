@@ -35,7 +35,7 @@ def geocode_address(address, city, state='NH', zip_code=''):
     url = f'https://nominatim.openstreetmap.org/search?{params}'
 
     req = urllib.request.Request(url, headers={
-        'User-Agent': 'NHCPRChallenge/1.0 (info@nhcprchallenge.com)',
+        'User-Agent': 'NHCPRChallenge/1.0 (info@cprchallengenh.com)',
     })
 
     try:
