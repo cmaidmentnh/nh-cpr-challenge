@@ -1,0 +1,21 @@
+/* Custom styles for NH CPR Challenge */
+
+/* Leaflet popup overrides */
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content {
+    margin: 12px 16px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Print styles for certificates */
+@media print {
+    nav, footer, .no-print {
+        display: none !important;
+    }
+}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}District Map{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    #district-map { height: calc(100vh - 200px); min-height: 500px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-navy-900">Executive Council District Map</h1>
+            <p class="text-gray-600">Click a district to learn more. Training locations are marked with pins.</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{{ url_for('trainings') }}" class="bg-gold hover:bg-gold-dark text-navy-900 px-4 py-2 rounded-lg text-sm font-bold transition">Find a Training</a>
+            <a href="{{ url_for('host') }}" class="bg-navy-900 hover:bg-navy-800 text-white px-4 py-2 rounded-lg text-sm font-bold transition">Host a Training</a>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex flex-wrap gap-4 mb-4 bg-white rounded-lg shadow-sm px-4 py-3">
+        {% for d in range(1, 6) %}
+        <div class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded" style="background-color: {{ district_colors[d] }}; opacity: 0.6;"></span>
+            <span class="text-sm text-gray-700"><strong>{{ d }}</strong> &mdash; {{ councilors[d]['name'] }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="district-map" class="rounded-xl shadow-md border border-gray-200"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script>
+    initDistrictMap('district-map');
+</script>
+{% endblock %}

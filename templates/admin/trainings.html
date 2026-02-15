@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Manage Trainings{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-navy-900">Manage Trainings</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="text-navy-600 hover:text-navy-800 text-sm">&larr; Dashboard</a>
+    </div>
+
+    <!-- Status Filters -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <a href="{{ url_for('admin_trainings') }}" class="px-3 py-1 rounded-full text-sm {% if not status_filter %}bg-navy-900 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">All</a>
+        <a href="{{ url_for('admin_trainings', status='pending') }}" class="px-3 py-1 rounded-full text-sm {% if status_filter == 'pending' %}bg-orange-500 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">Pending</a>
+        <a href="{{ url_for('admin_trainings', status='approved') }}" class="px-3 py-1 rounded-full text-sm {% if status_filter == 'approved' %}bg-green-600 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">Approved</a>
+        <a href="{{ url_for('admin_trainings', status='completed') }}" class="px-3 py-1 rounded-full text-sm {% if status_filter == 'completed' %}bg-blue-600 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">Completed</a>
+        <a href="{{ url_for('admin_trainings', status='cancelled') }}" class="px-3 py-1 rounded-full text-sm {% if status_filter == 'cancelled' %}bg-red-600 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">Cancelled</a>
+    </div>
+
+    {% if trainings %}
+    <div class="space-y-4">
+        {% for t in trainings %}
+        <div class="bg-white rounded-xl shadow-sm border {% if t.status == 'pending' %}border-orange-200{% else %}border-gray-100{% endif %} p-6">
+            <div class="flex flex-col md:flex-row justify-between gap-4">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-3 h-3 rounded-full" style="background-color: {{ district_colors[t.district] }}"></span>
+                        <span class="text-sm text-gray-500">District {{ t.district }}</span>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                            {% if t.status == 'pending' %}bg-orange-100 text-orange-700
+                            {% elif t.status == 'approved' %}bg-green-100 text-green-700
+                            {% elif t.status == 'completed' %}bg-blue-100 text-blue-700
+                            {% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {{ t.status }}
+                        </span>
+                    </div>
+                    <h3 class="font-bold text-navy-900 text-lg">{{ t.location_name }}</h3>
+                    <p class="text-gray-600 text-sm">{{ t.host_name }}{% if t.organization %} ({{ t.organization }}){% endif %} &middot; {{ t.host_email }}</p>
+                    <p class="text-gray-500 text-sm">{{ t.date.strftime('%B %d, %Y') }} &middot; {{ t.start_time or 'TBD' }} &middot; {{ t.city or '' }}</p>
+                    <p class="text-gray-400 text-sm">{{ t.rsvps.count() }} RSVPs / {{ t.capacity }} capacity{% if t.materials_needed %} &middot; <span class="text-orange-500">Needs materials</span>{% endif %}</p>
+                    {% if t.description %}
+                    <p class="text-gray-400 text-xs mt-1">{{ t.description[:200] }}</p>
+                    {% endif %}
+
+                    {% set att = t.attendances.first() %}
+                    {% if att %}
+                    <p class="text-sm mt-2 {% if att.approved %}text-green-600{% else %}text-orange-500{% endif %}">
+                        Attendance: {{ att.reported_count }} ({{ att.reported_by }})
+                        {% if att.approved %} &#9989; Approved{% else %} &#9203; Pending{% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col gap-2 md:items-end">
+                    {% if t.status == 'pending' %}
+                    <form method="POST" action="{{ url_for('admin_approve_training', training_id=t.id) }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition w-full md:w-auto">Approve</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin_reject_training', training_id=t.id) }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition w-full md:w-auto">Reject</button>
+                    </form>
+                    {% elif t.status == 'approved' %}
+                    <a href="{{ url_for('admin_rsvps', training_id=t.id) }}" class="bg-navy-100 text-navy-800 px-4 py-2 rounded-lg text-sm font-bold hover:bg-navy-200 transition text-center">View RSVPs</a>
+                    <form method="POST" action="{{ url_for('admin_complete_training', training_id=t.id) }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition w-full md:w-auto">Mark Completed</button>
+                    </form>
+                    {% elif t.status == 'completed' %}
+                    <a href="{{ url_for('admin_rsvps', training_id=t.id) }}" class="bg-navy-100 text-navy-800 px-4 py-2 rounded-lg text-sm font-bold hover:bg-navy-200 transition text-center">View RSVPs</a>
+
+                    {% set att = t.attendances.first() %}
+                    {% if att and not att.approved %}
+                    <form method="POST" action="{{ url_for('admin_approve_attendance', attendance_id=att.id) }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition w-full md:w-auto">Approve Attendance</button>
+                    </form>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('admin_issue_certificates', training_id=t.id) }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="bg-gold text-navy-900 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gold-dark transition w-full md:w-auto">Issue Certificates</button>
+                    </form>
+                    {% endif %}
+
+                    <!-- Inline attendance override -->
+                    {% if t.status in ('approved', 'completed') %}
+                    <details class="mt-2 w-full">
+                        <summary class="text-xs text-gray-400 cursor-pointer">Override attendance</summary>
+                        <form method="POST" action="{{ url_for('admin_attendance', training_id=t.id) }}" class="mt-2 flex gap-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="number" name="reported_count" placeholder="Count" class="border border-gray-300 rounded px-2 py-1 text-sm w-20">
+                            <input type="text" name="notes" placeholder="Notes" class="border border-gray-300 rounded px-2 py-1 text-sm flex-1">
+                            <button class="bg-gray-600 text-white px-3 py-1 rounded text-sm">Set</button>
+                        </form>
+                    </details>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 bg-white rounded-xl shadow-sm">
+        <p class="text-gray-400">No trainings{% if status_filter %} with status "{{ status_filter }}"{% endif %}.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-navy-900 mb-2 text-center">CPR Challenge Leaderboard</h1>
+    <p class="text-gray-600 text-center mb-8">Which Executive Council district will train the most people in Hands-Only CPR?</p>
+
+    <!-- Overall Progress -->
+    <div class="bg-white rounded-xl shadow-md p-8 mb-8">
+        <div class="flex justify-between items-end mb-2">
+            <span class="text-sm font-medium text-gray-600">Overall Progress</span>
+            <span class="text-sm text-gray-500">Goal: {{ "{:,}".format(goal) }}</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+            {% set pct = (total / goal * 100) if goal > 0 else 0 %}
+            <div class="h-full rounded-full bg-gradient-to-r from-navy-700 to-gold transition-all duration-1000"
+                 style="width: {{ [pct, 100]|min }}%">
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <span class="text-4xl font-bold text-navy-900">{{ "{:,}".format(total) }}</span>
+            <span class="text-gray-500"> of {{ "{:,}".format(goal) }} trained</span>
+        </div>
+    </div>
+
+    <!-- District Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-10">
+        {% set sorted_districts = district_counts|dictsort(by='value', reverse=true) %}
+        {% for d, count in sorted_districts %}
+        {% set rank = loop.index %}
+        <div class="bg-white rounded-xl shadow-md p-6 text-center relative overflow-hidden hover:shadow-lg transition">
+            {% if rank == 1 and count > 0 %}
+            <div class="absolute top-2 right-2 text-2xl">&#127942;</div>
+            {% endif %}
+            <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white text-xl font-bold" style="background-color: {{ district_colors[d] }}">
+                {{ d }}
+            </div>
+            <p class="text-xs text-gray-500 uppercase tracking-wide">District {{ d }}</p>
+            <p class="font-bold text-navy-900 text-sm mb-2">{{ councilors[d]['name'] }}</p>
+            <p class="text-4xl font-bold" style="color: {{ district_colors[d] }}">{{ "{:,}".format(count) }}</p>
+            <p class="text-xs text-gray-400">people trained</p>
+            {% if goal > 0 %}
+            <div class="w-full bg-gray-100 rounded-full h-2 mt-3">
+                {% set dpct = (count / (goal / 5) * 100) %}
+                <div class="h-full rounded-full" style="width: {{ [dpct, 100]|min }}%; background-color: {{ district_colors[d] }}"></div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Chart -->
+    <div class="bg-white rounded-xl shadow-md p-8">
+        <h2 class="text-xl font-bold text-navy-900 mb-6 text-center">District Comparison</h2>
+        <div style="max-height: 400px;">
+            <canvas id="leaderboard-chart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const districtData = {{ district_counts | tojson }};
+    const councilors = {{ councilors | tojson }};
+    const colors = {{ district_colors | tojson }};
+
+    const labels = [];
+    const data = [];
+    const bgColors = [];
+
+    // Sort by count descending
+    const sorted = Object.entries(districtData).sort((a, b) => b[1] - a[1]);
+    for (const [d, count] of sorted) {
+        labels.push('District ' + d + '\n' + councilors[d].name);
+        data.push(count);
+        bgColors.push(colors[d]);
+    }
+
+    const ctx = document.getElementById('leaderboard-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'People Trained',
+                data: data,
+                backgroundColor: bgColors,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#e5e7eb' },
+                    ticks: { precision: 0 },
+                },
+                x: {
+                    grid: { display: false },
+                }
+            }
+        }
+    });
+
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+        fetch('/api/districts')
+            .then(r => r.json())
+            .then(data => {
+                // Update the total
+                const totalEl = document.querySelector('.text-4xl.font-bold.text-navy-900');
+                if (totalEl) totalEl.textContent = data.total.toLocaleString();
+            })
+            .catch(() => {});
+    }, 30000);
+</script>
+{% endblock %}

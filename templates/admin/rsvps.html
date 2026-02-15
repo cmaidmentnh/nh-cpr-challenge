@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}RSVPs{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-navy-900">RSVPs</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="text-navy-600 hover:text-navy-800 text-sm">&larr; Dashboard</a>
+    </div>
+
+    <!-- Filter by Training -->
+    <div class="mb-6">
+        <select onchange="window.location.href=this.value" class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
+            <option value="{{ url_for('admin_rsvps') }}" {% if not training_id %}selected{% endif %}>All Trainings</option>
+            {% for t in trainings_list %}
+            <option value="{{ url_for('admin_rsvps', training_id=t.id) }}" {% if training_id == t.id %}selected{% endif %}>
+                {{ t.location_name }} ({{ t.date.strftime('%m/%d') }}) — {{ t.rsvps.count() }} RSVPs
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    {% if rsvps %}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-navy-50">
+                    <tr>
+                        <th class="text-left py-3 px-4 font-medium text-navy-800">Name</th>
+                        <th class="text-left py-3 px-4 font-medium text-navy-800">Email</th>
+                        <th class="text-left py-3 px-4 font-medium text-navy-800">Phone</th>
+                        <th class="text-left py-3 px-4 font-medium text-navy-800">Training</th>
+                        <th class="text-left py-3 px-4 font-medium text-navy-800">District</th>
+                        <th class="text-left py-3 px-4 font-medium text-navy-800">RSVP Date</th>
+                        <th class="text-left py-3 px-4 font-medium text-navy-800">Attended</th>
+                        <th class="text-left py-3 px-4 font-medium text-navy-800">Certificate</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for r in rsvps %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 font-medium text-gray-800">{{ r.name }}</td>
+                        <td class="py-3 px-4 text-gray-600">{{ r.email }}</td>
+                        <td class="py-3 px-4 text-gray-600">{{ r.phone or '—' }}</td>
+                        <td class="py-3 px-4 text-gray-600">
+                            <span class="text-xs">{{ r.training.location_name }}</span>
+                            <br><span class="text-xs text-gray-400">{{ r.training.date.strftime('%m/%d') }}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            {% if r.district %}
+                            <span class="w-5 h-5 rounded-full inline-flex items-center justify-center text-white text-xs font-bold" style="background-color: {{ district_colors.get(r.district, '#999') }}">{{ r.district }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-gray-400 text-xs">{{ r.created_at.strftime('%m/%d/%y %I:%M%p') }}</td>
+                        <td class="py-3 px-4">
+                            {% if r.attended == true %}
+                            <span class="text-green-600">&#9989;</span>
+                            {% elif r.attended == false %}
+                            <span class="text-red-400">&#10060;</span>
+                            {% else %}
+                            <span class="text-gray-300">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4">
+                            {% if r.certificate %}
+                            <a href="{{ url_for('download_certificate', certificate_number=r.certificate.certificate_number) }}" class="text-navy-600 underline text-xs">{{ r.certificate.certificate_number }}</a>
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <p class="text-sm text-gray-400 mt-2">{{ rsvps|length }} RSVP{{ 's' if rsvps|length != 1 }}</p>
+    {% else %}
+    <div class="text-center py-12 bg-white rounded-xl shadow-sm">
+        <p class="text-gray-400">No RSVPs{% if training_id %} for this training{% endif %}.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

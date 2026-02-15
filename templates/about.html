@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-navy-900 mb-8">About the NH CPR Challenge</h1>
+
+    <!-- What is it -->
+    <section class="bg-white rounded-xl shadow-md p-8 mb-8">
+        <h2 class="text-2xl font-bold text-navy-900 mb-4">What Is the CPR Challenge?</h2>
+        <p class="text-gray-700 mb-4">
+            The NH CPR Challenge is a bipartisan initiative by New Hampshire's five Executive Councilors to train as many
+            Granite Staters as possible in Hands-Only CPR during <strong>EMS Week 2026 (May 17&ndash;23)</strong>.
+        </p>
+        <p class="text-gray-700 mb-4">
+            Each Executive Council district is competing to see who can train the most people. All trainings are
+            <strong>completely free</strong> and take just <strong>15&ndash;20 minutes</strong>. No prior experience is needed.
+        </p>
+        <p class="text-gray-700">
+            The goal: give every New Hampshire resident the confidence to act if they witness a cardiac arrest.
+            You don't need to be a medical professional&mdash;you just need to know two steps.
+        </p>
+    </section>
+
+    <!-- Why CPR -->
+    <section class="bg-cpr-light rounded-xl p-8 mb-8 border border-red-200">
+        <h2 class="text-2xl font-bold text-cpr-red mb-4">Why Does This Matter?</h2>
+        <div class="grid md:grid-cols-3 gap-6 text-center">
+            <div>
+                <p class="text-3xl font-bold text-cpr-red">350,000+</p>
+                <p class="text-gray-700 text-sm mt-1">cardiac arrests outside hospitals each year in the U.S.</p>
+            </div>
+            <div>
+                <p class="text-3xl font-bold text-cpr-red">2&ndash;3x</p>
+                <p class="text-gray-700 text-sm mt-1">increased survival when a bystander performs CPR</p>
+            </div>
+            <div>
+                <p class="text-3xl font-bold text-cpr-red">~10%</p>
+                <p class="text-gray-700 text-sm mt-1">current survival rate&mdash;we can do better</p>
+            </div>
+        </div>
+        <p class="text-gray-700 mt-6">
+            For every minute that passes without CPR, a cardiac arrest victim's chance of survival drops 7&ndash;10%.
+            When a bystander steps in immediately, they can double or triple the chance the person survives.
+            <strong>Hands-Only CPR is simple, effective, and can be learned in minutes.</strong>
+        </p>
+    </section>
+
+    <!-- Hands-Only CPR -->
+    <section class="bg-white rounded-xl shadow-md p-8 mb-8">
+        <h2 class="text-2xl font-bold text-navy-900 mb-4">What Is Hands-Only CPR?</h2>
+        <p class="text-gray-700 mb-6">
+            Hands-Only CPR is CPR without mouth-to-mouth breaths. It's recommended for use by people who witness an
+            adult or teen suddenly collapse. It has just two steps:
+        </p>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-navy-50 rounded-lg p-6">
+                <p class="text-lg font-bold text-navy-900 mb-2">Step 1: Call 911</p>
+                <p class="text-gray-700">If you see someone suddenly collapse, call 911 immediately (or direct someone nearby to call). Every second counts.</p>
+            </div>
+            <div class="bg-navy-50 rounded-lg p-6">
+                <p class="text-lg font-bold text-navy-900 mb-2">Step 2: Push Hard &amp; Fast</p>
+                <p class="text-gray-700">Place the heel of your hand on the center of the person's chest. Push hard and fast at a rate of 100&ndash;120 compressions per minute. Don't stop until professional help arrives.</p>
+            </div>
+        </div>
+        <p class="text-gray-500 text-sm mt-6">
+            <strong>Tip:</strong> Push to the beat of "Stayin' Alive" by the Bee Gees&mdash;it's about 100 beats per minute, the ideal compression rate.
+        </p>
+    </section>
+
+    <!-- The Councilors -->
+    <section class="bg-navy-50 rounded-xl p-8 mb-8">
+        <h2 class="text-2xl font-bold text-navy-900 mb-6">The Executive Council</h2>
+        <p class="text-gray-700 mb-6">
+            New Hampshire's Executive Council consists of five members elected from districts across the state.
+            All five councilors are participating in the CPR Challenge.
+        </p>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {% for d in range(1, 6) %}
+            <div class="bg-white rounded-lg p-4 text-center shadow-sm">
+                <div class="w-14 h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-white text-xl font-bold" style="background-color: {{ district_colors[d] }}">
+                    {{ d }}
+                </div>
+                <p class="font-bold text-navy-900 text-sm">{{ councilors[d]['name'] }}</p>
+                <p class="text-xs text-gray-500">District {{ d }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="bg-white rounded-xl shadow-md p-8">
+        <h2 class="text-2xl font-bold text-navy-900 mb-6">Frequently Asked Questions</h2>
+        <div class="space-y-6">
+            <div>
+                <h3 class="font-bold text-navy-900">Is this a real CPR certification?</h3>
+                <p class="text-gray-700 mt-1">No. This is a Hands-Only CPR <em>awareness</em> training. You'll receive a certificate of participation, but it is not an official CPR certification from the American Heart Association or Red Cross. If you need formal certification (for a job, etc.), we encourage you to take a full course.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-navy-900">Who can attend?</h3>
+                <p class="text-gray-700 mt-1">Anyone! There are no age restrictions or prerequisites. Hands-Only CPR is designed to be accessible to everyone.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-navy-900">How much does it cost?</h3>
+                <p class="text-gray-700 mt-1">Nothing. All trainings through the NH CPR Challenge are completely free.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-navy-900">How long does the training take?</h3>
+                <p class="text-gray-700 mt-1">Most sessions are 15&ndash;20 minutes. You'll learn the two steps, practice compressions, and be on your way.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-navy-900">Can I host a training?</h3>
+                <p class="text-gray-700 mt-1">Yes! Fire departments, businesses, churches, community organizations, and individuals are all welcome to host. <a href="{{ url_for('host') }}" class="text-navy-600 underline font-medium">Apply here</a>.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-navy-900">What district am I in?</h3>
+                <p class="text-gray-700 mt-1">Check our <a href="{{ url_for('map_page') }}" class="text-navy-600 underline font-medium">interactive map</a> to find your Executive Council district.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-navy-900">What if I can't make it to a training during EMS Week?</h3>
+                <p class="text-gray-700 mt-1">We encourage you to check out the American Heart Association's free online resources at <strong>cpr.heart.org</strong> to learn Hands-Only CPR on your own.</p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
