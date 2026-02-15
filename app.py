@@ -54,10 +54,12 @@ def security_headers(response):
 # ---------------------------------------------------------------------------
 @app.context_processor
 def inject_globals():
+    has_approved = Training.query.filter(Training.status.in_(['approved', 'completed'])).first() is not None
     return {
         'councilors': COUNCILORS,
         'district_colors': DISTRICT_COLORS,
         'now': datetime.utcnow(),
+        'show_leaderboard': has_approved,
     }
 
 

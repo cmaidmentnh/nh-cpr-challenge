@@ -54,16 +54,7 @@
     <div class="bg-navy-900 border-b-2 border-gold">
         <div class="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <!-- NH State Seal (simplified) -->
-                <svg class="w-7 h-7 text-gold flex-shrink-0" viewBox="0 0 100 100" fill="none">
-                    <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3"/>
-                    <circle cx="50" cy="50" r="38" stroke="currentColor" stroke-width="1.5"/>
-                    <text x="50" y="20" text-anchor="middle" fill="currentColor" font-size="8" font-family="serif" letter-spacing="1">STATE OF</text>
-                    <text x="50" y="90" text-anchor="middle" fill="currentColor" font-size="7" font-family="serif" letter-spacing="1">NEW HAMPSHIRE</text>
-                    <!-- Ship/shield simplified -->
-                    <path d="M35 42 L50 35 L65 42 L65 62 Q50 72 35 62Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                    <path d="M42 50 L50 46 L58 50 L58 55 Q50 60 42 55Z" stroke="currentColor" stroke-width="1" fill="currentColor" opacity="0.3"/>
-                </svg>
+                <img src="{{ url_for('static', filename='img/nh-seal.webp') }}" alt="State of New Hampshire Seal" class="w-7 h-7 flex-shrink-0">
                 <div>
                     <span class="text-white text-xs font-semibold tracking-wide uppercase">State of New Hampshire</span>
                     <span class="text-gold text-xs ml-2 hidden sm:inline">Executive Council</span>
@@ -87,7 +78,7 @@
                     <a href="{{ url_for('index') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Home</a>
                     <a href="{{ url_for('trainings') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Find a Training</a>
                     <a href="{{ url_for('host') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Host a Training</a>
-                    <a href="{{ url_for('leaderboard') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Leaderboard</a>
+                    {% if show_leaderboard %}<a href="{{ url_for('leaderboard') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">Leaderboard</a>{% endif %}
                     <a href="{{ url_for('about') }}" class="text-navy-700 hover:text-navy-900 hover:bg-navy-50 px-3 py-2 text-sm font-medium transition rounded">About</a>
                 </div>
                 <div class="md:hidden">
@@ -103,7 +94,7 @@
             <a href="{{ url_for('index') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Home</a>
             <a href="{{ url_for('trainings') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Find a Training</a>
             <a href="{{ url_for('host') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Host a Training</a>
-            <a href="{{ url_for('leaderboard') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Leaderboard</a>
+            {% if show_leaderboard %}<a href="{{ url_for('leaderboard') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium border-b border-gray-100">Leaderboard</a>{% endif %}
             <a href="{{ url_for('about') }}" class="block py-2.5 text-navy-700 hover:text-navy-900 text-sm font-medium">About</a>
         </div>
     </nav>
@@ -132,11 +123,7 @@
             <div class="grid md:grid-cols-3 gap-8">
                 <div>
                     <div class="flex items-center gap-2 mb-3">
-                        <svg class="w-5 h-5 text-gold flex-shrink-0" viewBox="0 0 100 100" fill="none">
-                            <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3"/>
-                            <circle cx="50" cy="50" r="38" stroke="currentColor" stroke-width="1.5"/>
-                            <path d="M35 42 L50 35 L65 42 L65 62 Q50 72 35 62Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                        </svg>
+                        <img src="{{ url_for('static', filename='img/nh-seal.webp') }}" alt="NH Seal" class="w-5 h-5 flex-shrink-0">
                         <span class="text-white font-serif font-bold">NH CPR Challenge</span>
                     </div>
                     <p class="text-sm leading-relaxed">An initiative of the New Hampshire Executive Council to bring free Hands-Only CPR awareness training to every corner of the Granite State during EMS Week 2026.</p>
@@ -146,7 +133,7 @@
                     <ul class="text-sm space-y-2">
                         <li><a href="{{ url_for('trainings') }}" class="hover:text-white transition">Find a Training</a></li>
                         <li><a href="{{ url_for('host') }}" class="hover:text-white transition">Host a Training</a></li>
-                        <li><a href="{{ url_for('leaderboard') }}" class="hover:text-white transition">Leaderboard</a></li>
+                        {% if show_leaderboard %}<li><a href="{{ url_for('leaderboard') }}" class="hover:text-white transition">Leaderboard</a></li>{% endif %}
                         <li><a href="{{ url_for('about') }}" class="hover:text-white transition">About / FAQ</a></li>
                     </ul>
                 </div>
