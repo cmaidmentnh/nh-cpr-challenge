@@ -19,7 +19,7 @@ const COUNCILORS = {
 };
 
 // NH center coordinates
-const NH_CENTER = [43.2, -71.5];
+const NH_CENTER = [44.0, -71.5];
 const NH_ZOOM = 8;
 
 function createMap(elementId) {
