@@ -1,0 +1,37 @@
+<!-- Admin Navigation Bar -->
+<div class="bg-navy-900 border-b border-navy-700">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-between h-11">
+            <div class="flex items-center gap-1">
+                <a href="{{ url_for('admin_dashboard') }}"
+                   class="px-3 py-2 text-sm font-medium rounded transition
+                   {% if request.endpoint == 'admin_dashboard' %}text-white bg-navy-700{% else %}text-navy-300 hover:text-white hover:bg-navy-800{% endif %}">
+                    Dashboard
+                </a>
+                <a href="{{ url_for('admin_trainings') }}"
+                   class="px-3 py-2 text-sm font-medium rounded transition relative
+                   {% if request.endpoint in ('admin_trainings', 'admin_approve_training', 'admin_reject_training') %}text-white bg-navy-700{% else %}text-navy-300 hover:text-white hover:bg-navy-800{% endif %}">
+                    Trainings
+                    {% set pending_count = pending_nav|default(0) %}
+                    {% if pending_count > 0 %}
+                    <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{{ pending_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('admin_rsvps') }}"
+                   class="px-3 py-2 text-sm font-medium rounded transition
+                   {% if request.endpoint == 'admin_rsvps' %}text-white bg-navy-700{% else %}text-navy-300 hover:text-white hover:bg-navy-800{% endif %}">
+                    RSVPs
+                </a>
+                <a href="{{ url_for('admin_users') }}"
+                   class="px-3 py-2 text-sm font-medium rounded transition
+                   {% if request.endpoint in ('admin_users', 'admin_create_user') %}text-white bg-navy-700{% else %}text-navy-300 hover:text-white hover:bg-navy-800{% endif %}">
+                    Users
+                </a>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-navy-400 text-xs hidden sm:block">{{ current_user.name }}</span>
+                <a href="{{ url_for('logout') }}" class="text-navy-400 hover:text-white text-xs transition">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>

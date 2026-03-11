@@ -66,12 +66,16 @@ def security_headers(response):
 @app.context_processor
 def inject_globals():
     has_approved = Training.query.filter(Training.status.in_(['approved', 'completed'])).first() is not None
+    pending_nav = 0
+    if current_user.is_authenticated and current_user.role == 'admin':
+        pending_nav = Training.query.filter_by(status='pending').count()
     return {
         'councilors': COUNCILORS,
         'district_colors': DISTRICT_COLORS,
         'now': datetime.utcnow(),
         'show_leaderboard': has_approved,
         'current_user': current_user,
+        'pending_nav': pending_nav,
     }
 
 
@@ -564,10 +568,15 @@ def admin_dashboard():
     completed = Training.query.filter_by(status='completed').count()
     total_rsvps = RSVP.query.count()
     total_subscribers = Subscriber.query.count()
+    total_users = User.query.count()
     district_counts = get_district_counts()
     total_trained = sum(district_counts.values())
     goal = int(get_setting('goal_target', '1000'))
-    recent_rsvps = RSVP.query.order_by(RSVP.created_at.desc()).limit(10).all()
+    unapproved_attendance = Attendance.query.filter_by(approved=False).count()
+    upcoming = Training.query.filter_by(status='approved').filter(
+        Training.date >= date.today()
+    ).order_by(Training.date).limit(5).all()
+    recent_rsvps = RSVP.query.order_by(RSVP.created_at.desc()).limit(8).all()
     recent_trainings = Training.query.order_by(Training.created_at.desc()).limit(5).all()
     return render_template('admin/dashboard.html',
                            total_trainings=total_trainings,
@@ -576,9 +585,12 @@ def admin_dashboard():
                            completed=completed,
                            total_rsvps=total_rsvps,
                            total_subscribers=total_subscribers,
+                           total_users=total_users,
                            district_counts=district_counts,
                            total_trained=total_trained,
                            goal=goal,
+                           unapproved_attendance=unapproved_attendance,
+                           upcoming=upcoming,
                            recent_rsvps=recent_rsvps,
                            recent_trainings=recent_trainings)
 
