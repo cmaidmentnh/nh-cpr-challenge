@@ -5,7 +5,7 @@
 <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-navy-900">Admin Dashboard</h1>
-        <a href="{{ url_for('admin_logout') }}" class="text-gray-500 hover:text-gray-700 text-sm">Logout</a>
+        <a href="{{ url_for('logout') }}" class="text-gray-500 hover:text-gray-700 text-sm">Logout</a>
     </div>
 
     <!-- Stats Grid -->
@@ -64,6 +64,9 @@
                 <a href="{{ url_for('admin_rsvps') }}" class="block bg-navy-50 text-navy-800 p-3 rounded-lg hover:bg-navy-100 transition">
                     View All RSVPs
                 </a>
+                <a href="{{ url_for('admin_users') }}" class="block bg-purple-50 text-purple-800 p-3 rounded-lg hover:bg-purple-100 transition">
+                    Manage Users
+                </a>
                 <a href="{{ url_for('admin_export_csv', data_type='trainings') }}" class="block bg-gray-50 text-gray-700 p-3 rounded-lg hover:bg-gray-100 transition">
                     Export Trainings CSV
                 </a>
@@ -111,7 +114,7 @@
                     <input type="number" name="goal_target" value="{{ goal }}" class="w-full border border-gray-300 rounded-lg px-4 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">New Admin Password (leave blank to keep current)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Change My Password (leave blank to keep current)</label>
                     <input type="password" name="new_password" class="w-full border border-gray-300 rounded-lg px-4 py-2">
                 </div>
             </div>

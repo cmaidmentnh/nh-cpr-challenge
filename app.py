@@ -14,10 +14,11 @@ from flask import (Flask, render_template, request, jsonify, redirect,
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
-from models import db, Training, RSVP, Attendance, Certificate, Settings, Subscriber, COUNCILORS, DISTRICT_COLORS
+from models import db, User, Training, RSVP, Attendance, Certificate, Settings, Subscriber, COUNCILORS, DISTRICT_COLORS
 from emails import (send_rsvp_confirmation, send_rsvp_notification_to_host,
                     send_training_approved, send_certificate_ready,
                     send_host_application_received, send_admin_new_host_application,
@@ -37,6 +38,15 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 db.init_app(app)
 csrf = CSRFProtect(app)
 limiter = Limiter(get_remote_address, app=app, default_limits=['200 per day', '50 per hour'])
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 # ---------------------------------------------------------------------------
@@ -61,17 +71,27 @@ def inject_globals():
         'district_colors': DISTRICT_COLORS,
         'now': datetime.utcnow(),
         'show_leaderboard': has_approved,
+        'current_user': current_user,
     }
 
 
 # ---------------------------------------------------------------------------
-# Admin auth
+# Auth decorators
 # ---------------------------------------------------------------------------
-def login_required(f):
+def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if not session.get('admin_logged_in'):
-            return redirect(url_for('admin_login'))
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def host_or_admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role not in ('host', 'admin'):
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated
 
@@ -170,6 +190,7 @@ def host():
             description=request.form.get('description', '').strip(),
             materials_needed='materials_needed' in request.form,
             status='pending',
+            host_user_id=current_user.id if current_user.is_authenticated else None,
         )
         db.session.add(training)
         db.session.commit()
@@ -405,6 +426,66 @@ def host_report(host_token):
 
 
 # =========================================================================
+# HOST DASHBOARD
+# =========================================================================
+
+@app.route('/host/dashboard')
+@host_or_admin_required
+def host_dashboard():
+    my_trainings = Training.query.filter_by(
+        host_user_id=current_user.id
+    ).order_by(Training.date.desc()).all()
+    return render_template('host/dashboard.html', trainings=my_trainings)
+
+
+@app.route('/host/training/<int:training_id>')
+@host_or_admin_required
+def host_training_detail(training_id):
+    training = Training.query.get_or_404(training_id)
+    if training.host_user_id != current_user.id and current_user.role != 'admin':
+        abort(403)
+    rsvps = training.rsvps.all()
+    existing_report = Attendance.query.filter_by(training_id=training.id).first()
+    return render_template('host/training_detail.html', training=training,
+                           rsvps=rsvps, existing_report=existing_report)
+
+
+@app.route('/host/training/<int:training_id>/report', methods=['GET', 'POST'])
+@host_or_admin_required
+def host_training_report(training_id):
+    training = Training.query.get_or_404(training_id)
+    if training.host_user_id != current_user.id and current_user.role != 'admin':
+        abort(403)
+
+    if request.method == 'POST':
+        count = int(request.form.get('reported_count', 0))
+        notes = request.form.get('notes', '').strip()
+
+        attendance = Attendance(
+            training_id=training.id,
+            reported_count=count,
+            reported_by='host',
+            notes=notes,
+        )
+        db.session.add(attendance)
+
+        attended_ids = request.form.getlist('attended')
+        for rsvp in training.rsvps.all():
+            rsvp.attended = str(rsvp.id) in attended_ids
+
+        training.status = 'completed'
+        db.session.commit()
+
+        flash('Thank you! Your attendance report has been submitted.', 'success')
+        return redirect(url_for('host_training_detail', training_id=training_id))
+
+    rsvps = training.rsvps.all()
+    existing_report = Attendance.query.filter_by(training_id=training.id).first()
+    return render_template('host/report.html', training=training,
+                           rsvps=rsvps, existing_report=existing_report)
+
+
+# =========================================================================
 # CERTIFICATES
 # =========================================================================
 
@@ -433,27 +514,49 @@ def download_certificate(certificate_number):
 # ADMIN ROUTES
 # =========================================================================
 
-@app.route('/admin/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 @limiter.limit('5 per minute', methods=['POST'])
-def admin_login():
-    if request.method == 'POST':
-        password = request.form.get('password', '')
-        stored_hash = get_setting('admin_password_hash')
-        if stored_hash and check_password_hash(stored_hash, password):
-            session['admin_logged_in'] = True
+def login():
+    if current_user.is_authenticated:
+        if current_user.role == 'admin':
             return redirect(url_for('admin_dashboard'))
-        flash('Invalid password.', 'error')
-    return render_template('admin/login.html')
+        return redirect(url_for('host_dashboard'))
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        user = User.query.filter_by(email=email).first()
+        if user and user.is_active and user.check_password(password):
+            login_user(user)
+            # Auto-claim trainings by matching host email
+            Training.query.filter_by(
+                host_email=user.email, host_user_id=None
+            ).update({'host_user_id': user.id})
+            db.session.commit()
+            if user.role == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('host_dashboard'))
+        flash('Invalid email or password.', 'error')
+    return render_template('login.html')
+
+
+@app.route('/admin/login')
+def admin_login():
+    return redirect(url_for('login'))
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 
 @app.route('/admin/logout')
 def admin_logout():
-    session.pop('admin_logged_in', None)
-    return redirect(url_for('index'))
+    return redirect(url_for('logout'))
 
 
 @app.route('/admin')
-@login_required
+@admin_required
 def admin_dashboard():
     total_trainings = Training.query.count()
     pending = Training.query.filter_by(status='pending').count()
@@ -481,7 +584,7 @@ def admin_dashboard():
 
 
 @app.route('/admin/trainings')
-@login_required
+@admin_required
 def admin_trainings():
     status_filter = request.args.get('status', '')
     query = Training.query.order_by(Training.created_at.desc())
@@ -493,7 +596,7 @@ def admin_trainings():
 
 
 @app.route('/admin/trainings/<int:training_id>/approve', methods=['POST'])
-@login_required
+@admin_required
 def admin_approve_training(training_id):
     training = Training.query.get_or_404(training_id)
     training.status = 'approved'
@@ -518,7 +621,7 @@ def admin_approve_training(training_id):
 
 
 @app.route('/admin/trainings/<int:training_id>/reject', methods=['POST'])
-@login_required
+@admin_required
 def admin_reject_training(training_id):
     training = Training.query.get_or_404(training_id)
     training.status = 'cancelled'
@@ -528,7 +631,7 @@ def admin_reject_training(training_id):
 
 
 @app.route('/admin/trainings/<int:training_id>/complete', methods=['POST'])
-@login_required
+@admin_required
 def admin_complete_training(training_id):
     training = Training.query.get_or_404(training_id)
     training.status = 'completed'
@@ -538,7 +641,7 @@ def admin_complete_training(training_id):
 
 
 @app.route('/admin/rsvps')
-@login_required
+@admin_required
 def admin_rsvps():
     training_id = request.args.get('training_id', type=int)
     query = RSVP.query.order_by(RSVP.created_at.desc())
@@ -552,7 +655,7 @@ def admin_rsvps():
 
 
 @app.route('/admin/attendance/<int:training_id>', methods=['POST'])
-@login_required
+@admin_required
 def admin_attendance(training_id):
     training = Training.query.get_or_404(training_id)
     count = int(request.form.get('reported_count', 0))
@@ -576,7 +679,7 @@ def admin_attendance(training_id):
 
 
 @app.route('/admin/attendance/<int:attendance_id>/approve', methods=['POST'])
-@login_required
+@admin_required
 def admin_approve_attendance(attendance_id):
     att = Attendance.query.get_or_404(attendance_id)
     att.approved = True
@@ -586,7 +689,7 @@ def admin_approve_attendance(attendance_id):
 
 
 @app.route('/admin/certificates/<int:training_id>/issue', methods=['POST'])
-@login_required
+@admin_required
 def admin_issue_certificates(training_id):
     training = Training.query.get_or_404(training_id)
     issued = 0
@@ -609,7 +712,7 @@ def admin_issue_certificates(training_id):
 
 
 @app.route('/admin/export/csv/<data_type>')
-@login_required
+@admin_required
 def admin_export_csv(data_type):
     si = StringIO()
     writer = csv.writer(si)
@@ -656,18 +759,92 @@ def admin_export_csv(data_type):
 
 
 @app.route('/admin/settings', methods=['POST'])
-@login_required
+@admin_required
 def admin_settings():
     goal = request.form.get('goal_target', '1000')
     set_setting('goal_target', goal)
 
     new_password = request.form.get('new_password', '').strip()
     if new_password:
-        set_setting('admin_password_hash', generate_password_hash(new_password))
+        current_user.set_password(new_password)
+        db.session.commit()
         flash('Password updated.', 'success')
 
     flash('Settings saved.', 'success')
     return redirect(url_for('admin_dashboard'))
+
+
+# =========================================================================
+# ADMIN USER MANAGEMENT
+# =========================================================================
+
+@app.route('/admin/users')
+@admin_required
+def admin_users():
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template('admin/users.html', users=users)
+
+
+@app.route('/admin/users/create', methods=['POST'])
+@admin_required
+def admin_create_user():
+    email = request.form.get('email', '').strip().lower()
+    name = request.form.get('name', '').strip()
+    role = request.form.get('role', 'host')
+    password = request.form.get('password', '').strip()
+
+    if not email or not name or not password:
+        flash('Email, name, and password are required.', 'error')
+        return redirect(url_for('admin_users'))
+
+    if role not in ('admin', 'host'):
+        role = 'host'
+
+    existing = User.query.filter_by(email=email).first()
+    if existing:
+        flash(f'A user with email {email} already exists.', 'error')
+        return redirect(url_for('admin_users'))
+
+    user = User(email=email, name=name, role=role)
+    user.set_password(password)
+    db.session.add(user)
+
+    # Auto-claim any trainings with matching host email
+    Training.query.filter_by(
+        host_email=email, host_user_id=None
+    ).update({'host_user_id': user.id})
+
+    db.session.commit()
+    flash(f'User {name} ({role}) created.', 'success')
+    return redirect(url_for('admin_users'))
+
+
+@app.route('/admin/users/<int:user_id>/toggle-active', methods=['POST'])
+@admin_required
+def admin_toggle_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash('You cannot deactivate yourself.', 'error')
+        return redirect(url_for('admin_users'))
+    user.is_active = not user.is_active
+    db.session.commit()
+    status = 'activated' if user.is_active else 'deactivated'
+    flash(f'User {user.name} {status}.', 'success')
+    return redirect(url_for('admin_users'))
+
+
+@app.route('/admin/users/<int:user_id>/reset-password', methods=['POST'])
+@admin_required
+def admin_reset_password(user_id):
+    user = User.query.get_or_404(user_id)
+    new_password = request.form.get('password', '').strip()
+    if not new_password:
+        flash('Password is required.', 'error')
+        return redirect(url_for('admin_users'))
+    user.set_password(new_password)
+    db.session.commit()
+    flash(f'Password reset for {user.name}.', 'success')
+    return redirect(url_for('admin_users'))
 
 
 # =========================================================================
@@ -707,6 +884,8 @@ def robots():
 Allow: /
 Disallow: /admin/
 Disallow: /host/report/
+Disallow: /host/dashboard
+Disallow: /host/training/
 Disallow: /api/
 
 Sitemap: https://cprchallengenh.com/sitemap.xml"""
@@ -758,11 +937,28 @@ def send_post_event_reminders():
 # DB Init
 # ---------------------------------------------------------------------------
 def init_db():
+    from sqlalchemy import text, inspect
     db.create_all()
-    # Set default admin password if not exists
-    if not get_setting('admin_password_hash'):
-        default_pw = os.getenv('ADMIN_PASSWORD', 'changeme')
-        set_setting('admin_password_hash', generate_password_hash(default_pw))
+
+    # Migrate: add host_user_id column to trainings if missing
+    inspector = inspect(db.engine)
+    columns = [c['name'] for c in inspector.get_columns('trainings')]
+    if 'host_user_id' not in columns:
+        with db.engine.connect() as conn:
+            conn.execute(text('ALTER TABLE trainings ADD COLUMN host_user_id INTEGER REFERENCES users(id)'))
+            conn.commit()
+
+    # Create default admin user if none exists
+    if not User.query.filter_by(role='admin').first():
+        admin = User(
+            email=os.getenv('ADMIN_EMAIL', 'admin@cprchallengenh.com'),
+            name='Admin',
+            role='admin',
+        )
+        admin.set_password(os.getenv('ADMIN_PASSWORD', 'changeme'))
+        db.session.add(admin)
+        db.session.commit()
+
     if not get_setting('goal_target'):
         set_setting('goal_target', os.getenv('GOAL_TARGET', '1000'))
 

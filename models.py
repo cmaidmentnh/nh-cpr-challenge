@@ -2,8 +2,30 @@
 
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
+
+
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(200), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='host')  # 'admin' or 'host'
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    trainings = db.relationship('Training', backref='user', lazy='dynamic')
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 # Executive Councilors (2025-2026)
 COUNCILORS = {
@@ -87,6 +109,7 @@ class Training(db.Model):
     status = db.Column(db.String(20), default='pending')
     materials_needed = db.Column(db.Boolean, default=False)
     host_token = db.Column(db.String(64), unique=True)
+    host_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     rsvps = db.relationship('RSVP', backref='training', lazy='dynamic')
