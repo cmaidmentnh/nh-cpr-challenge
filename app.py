@@ -904,6 +904,31 @@ Sitemap: https://cprchallengenh.com/sitemap.xml"""
     return Response(txt, mimetype='text/plain')
 
 
+@app.route('/llms.txt')
+def llms_txt():
+    content = """# NH CPR Challenge
+> cprchallengenh.com
+
+Free Hands-Only CPR awareness training across all five New Hampshire Executive Council districts during EMS Week 2026 (May 17-23).
+
+## Key Pages
+- / - Homepage with overview, countdown, and district map
+- /find - Find a free CPR training near you by town or zip code
+- /host - Sign up to host a training at your organization
+- /about - About the initiative and the Executive Council's role
+
+## About
+The NH CPR Challenge is a bipartisan initiative of the New Hampshire Executive Council. The goal is to train as many Granite Staters as possible in Hands-Only CPR during EMS Week. Training takes 15 minutes, requires no experience, and is completely free.
+
+## Key Facts
+- Hands-Only CPR has two steps: Call 911, then push hard and fast in the center of the chest
+- Cardiac arrest kills more than 350,000 Americans per year
+- Bystander CPR can double or triple survival rates
+- New Hampshire trains across all five Executive Council districts
+"""
+    return Response(content, mimetype='text/plain')
+
+
 # =========================================================================
 # ERROR HANDLERS
 # =========================================================================
