@@ -109,11 +109,11 @@ class Training(db.Model):
     status = db.Column(db.String(20), default='pending')
     materials_needed = db.Column(db.Boolean, default=False)
     host_token = db.Column(db.String(64), unique=True)
-    host_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    host_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    rsvps = db.relationship('RSVP', backref='training', lazy='dynamic')
-    attendances = db.relationship('Attendance', backref='training', lazy='dynamic')
+    rsvps = db.relationship('RSVP', backref='training', lazy='dynamic', cascade='all, delete-orphan', passive_deletes=True)
+    attendances = db.relationship('Attendance', backref='training', lazy='dynamic', cascade='all, delete-orphan', passive_deletes=True)
 
     @property
     def spots_remaining(self):
@@ -149,7 +149,7 @@ class RSVP(db.Model):
     __tablename__ = 'rsvps'
 
     id = db.Column(db.Integer, primary_key=True)
-    training_id = db.Column(db.Integer, db.ForeignKey('trainings.id'), nullable=False)
+    training_id = db.Column(db.Integer, db.ForeignKey('trainings.id', ondelete='CASCADE'), nullable=False)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), nullable=False)
     phone = db.Column(db.String(20))
@@ -157,7 +157,7 @@ class RSVP(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     attended = db.Column(db.Boolean, nullable=True, default=None)
 
-    certificate = db.relationship('Certificate', backref='rsvp', uselist=False)
+    certificate = db.relationship('Certificate', backref='rsvp', uselist=False, cascade='all, delete-orphan', passive_deletes=True)
 
     __table_args__ = (
         db.UniqueConstraint('training_id', 'email', name='uq_rsvp_training_email'),
@@ -168,7 +168,7 @@ class Attendance(db.Model):
     __tablename__ = 'attendances'
 
     id = db.Column(db.Integer, primary_key=True)
-    training_id = db.Column(db.Integer, db.ForeignKey('trainings.id'), nullable=False)
+    training_id = db.Column(db.Integer, db.ForeignKey('trainings.id', ondelete='CASCADE'), nullable=False)
     reported_count = db.Column(db.Integer, nullable=False)
     reported_by = db.Column(db.String(20))
     reported_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -180,7 +180,7 @@ class Certificate(db.Model):
     __tablename__ = 'certificates'
 
     id = db.Column(db.Integer, primary_key=True)
-    rsvp_id = db.Column(db.Integer, db.ForeignKey('rsvps.id'), unique=True)
+    rsvp_id = db.Column(db.Integer, db.ForeignKey('rsvps.id', ondelete='CASCADE'), unique=True)
     certificate_number = db.Column(db.String(20), unique=True, nullable=False)
     issued_at = db.Column(db.DateTime, default=datetime.utcnow)
     downloaded = db.Column(db.Boolean, default=False)

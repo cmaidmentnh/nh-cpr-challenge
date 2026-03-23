@@ -93,7 +93,7 @@ def send_rsvp_confirmation(rsvp, training):
 <a href="{app_url}/trainings" style="display:inline-block;padding:12px 24px;background:#d4a843;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">View All Trainings</a>
 </p>
 """)
-    send_email(rsvp.email, 'Your CPR Training is Confirmed!', html)
+    return send_email(rsvp.email, 'Your CPR Training is Confirmed!', html)
 
 
 def send_rsvp_notification_to_host(rsvp, training):
@@ -109,7 +109,7 @@ def send_rsvp_notification_to_host(rsvp, training):
 </ul>
 <p>You now have <strong>{training.rsvps.count()}</strong> of {training.capacity} spots filled.</p>
 """)
-    send_email(training.host_email, f'New RSVP for your CPR training - {rsvp.name}', html)
+    return send_email(training.host_email, f'New RSVP for your CPR training - {rsvp.name}', html)
 
 
 def send_host_application_received(training):
@@ -129,7 +129,7 @@ def send_host_application_received(training):
 <p>You'll receive another email once your training has been approved and is listed on the website.</p>
 <p style="color:#64748b;font-size:13px;">If you have any questions, reply to this email.</p>
 """)
-    send_email(training.host_email, 'CPR Training Application Received', html)
+    return send_email(training.host_email, 'CPR Training Application Received', html)
 
 
 def send_training_approved(training):
@@ -151,7 +151,7 @@ def send_training_approved(training):
 </p>
 <p style="color:#64748b;font-size:13px;">Keep this link private — it's your unique portal for managing your training event.</p>
 """)
-    send_email(training.host_email, 'Your CPR Training Has Been Approved!', html)
+    return send_email(training.host_email, 'Your CPR Training Has Been Approved!', html)
 
 
 def send_admin_new_host_application(training):
@@ -212,6 +212,27 @@ def send_subscriber_training_notification(subscriber_email, training):
     send_email(subscriber_email, f'New CPR Training in {training.city} — {training.date.strftime("%B %d")}', html)
 
 
+def send_training_cancelled_to_rsvp(rsvp, training):
+    """Notify an attendee that a training they RSVPed for has been cancelled."""
+    app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
+    html = _email_wrapper(f"""
+<h2 style="color:#1e3a5f;margin-top:0;">Training Cancelled</h2>
+<p>Hi {rsvp.name},</p>
+<p>We're sorry to let you know that the CPR training you signed up for has been cancelled.</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0;">
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Date</td>
+<td style="padding:8px;">{training.date.strftime('%A, %B %d, %Y')}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Location</td>
+<td style="padding:8px;">{training.location_name}, {training.city or ''}</td></tr>
+</table>
+<p>Please check the website for other available trainings in your area.</p>
+<p style="text-align:center;margin-top:24px;">
+<a href="{app_url}/trainings" style="display:inline-block;padding:12px 24px;background:#d4a843;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Find Another Training</a>
+</p>
+""")
+    return send_email(rsvp.email, 'CPR Training Cancelled', html)
+
+
 def send_host_post_event_reminder(training):
     """Remind host to submit attendance count after their event."""
     app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
@@ -243,4 +264,4 @@ def send_certificate_ready(rsvp, certificate):
 </p>
 <p style="color:#64748b;font-size:13px;">Note: This certificate recognizes your participation in Hands-Only CPR awareness training. It is not an official CPR certification.</p>
 """)
-    send_email(rsvp.email, 'Your CPR Challenge Certificate is Ready!', html)
+    return send_email(rsvp.email, 'Your CPR Challenge Certificate is Ready!', html)

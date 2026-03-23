@@ -23,7 +23,8 @@ from models import db, User, Training, RSVP, Attendance, Certificate, Settings, 
 from emails import (send_rsvp_confirmation, send_rsvp_notification_to_host,
                     send_training_approved, send_certificate_ready,
                     send_host_application_received, send_admin_new_host_application,
-                    send_host_post_event_reminder, send_subscriber_training_notification)
+                    send_host_post_event_reminder, send_subscriber_training_notification,
+                    send_training_cancelled_to_rsvp)
 from certificates import generate_certificate
 from geocode import geocode_address
 
@@ -61,6 +62,7 @@ def security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return response
 
 
@@ -181,21 +183,62 @@ def trainings():
 @limiter.limit('10 per hour', methods=['POST'])
 def host():
     if request.method == 'POST':
+        host_name = request.form.get('host_name', '').strip()[:200]
+        host_email = request.form.get('host_email', '').strip()[:200]
+        host_phone = request.form.get('host_phone', '').strip()[:20]
+        organization = request.form.get('organization', '').strip()[:200]
+        location_name = request.form.get('location_name', '').strip()[:200]
+        address = request.form.get('address', '').strip()[:300]
+        city = request.form.get('city', '').strip()[:100]
+        zip_code = request.form.get('zip_code', '').strip()[:10]
+        description = request.form.get('description', '').strip()[:2000]
+        start_time = request.form.get('start_time', '').strip()[:10]
+        end_time = request.form.get('end_time', '').strip()[:10]
+
+        errors = []
+        if not host_name:
+            errors.append('Name is required.')
+        if not host_email:
+            errors.append('Email is required.')
+        if not location_name:
+            errors.append('Location name is required.')
+        if not city:
+            errors.append('City is required.')
+
+        try:
+            training_date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+            if training_date < date(2026, 5, 17) or training_date > date(2026, 5, 23):
+                errors.append('Date must be during EMS Week (May 17-23, 2026).')
+        except (ValueError, KeyError):
+            errors.append('A valid date is required.')
+            training_date = None
+
+        try:
+            district = int(request.form.get('district', 0))
+            if district < 1 or district > 5:
+                errors.append('Please select a valid Executive Council district (1-5).')
+        except ValueError:
+            errors.append('Invalid district.')
+            district = 0
+
+        try:
+            capacity = max(5, min(500, int(request.form.get('capacity', 30))))
+        except ValueError:
+            errors.append('Capacity must be a number.')
+            capacity = 30
+
+        if errors:
+            for error in errors:
+                flash(error, 'error')
+            return redirect(url_for('host'))
+
         training = Training(
-            host_name=request.form.get('host_name', '').strip(),
-            host_email=request.form.get('host_email', '').strip(),
-            host_phone=request.form.get('host_phone', '').strip(),
-            organization=request.form.get('organization', '').strip(),
-            location_name=request.form.get('location_name', '').strip(),
-            address=request.form.get('address', '').strip(),
-            city=request.form.get('city', '').strip(),
-            zip_code=request.form.get('zip_code', '').strip(),
-            district=int(request.form.get('district', 0)),
-            date=datetime.strptime(request.form['date'], '%Y-%m-%d').date(),
-            start_time=request.form.get('start_time', '').strip(),
-            end_time=request.form.get('end_time', '').strip(),
-            capacity=int(request.form.get('capacity', 30)),
-            description=request.form.get('description', '').strip(),
+            host_name=host_name, host_email=host_email, host_phone=host_phone,
+            organization=organization, location_name=location_name,
+            address=address, city=city, zip_code=zip_code,
+            district=district, date=training_date,
+            start_time=start_time, end_time=end_time,
+            capacity=capacity, description=description,
             materials_needed='materials_needed' in request.form,
             status='pending',
             host_user_id=current_user.id if current_user.is_authenticated else None,
@@ -203,17 +246,23 @@ def host():
         db.session.add(training)
         db.session.commit()
 
+        email_ok = True
         try:
-            send_host_application_received(training)
+            if not send_host_application_received(training):
+                email_ok = False
         except Exception as e:
             logger.error("Host confirmation email error: %s", e)
+            email_ok = False
 
         try:
             send_admin_new_host_application(training)
         except Exception as e:
             logger.error("Admin notification email error: %s", e)
 
-        flash('Thank you! Your training application has been submitted and is pending review. Check your email for confirmation.', 'success')
+        if email_ok:
+            flash('Thank you! Your training application has been submitted. Check your email for confirmation.', 'success')
+        else:
+            flash('Your application was submitted, but we could not send a confirmation email. Your application is still being reviewed.', 'warning')
         return redirect(url_for('host'))
     return render_template('host.html')
 
@@ -226,7 +275,14 @@ def rsvp(training_id):
         abort(404)
 
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
+        email = request.form.get('email', '').strip().lower()[:200]
+        name = request.form.get('name', '').strip()[:200]
+        phone = request.form.get('phone', '').strip()[:20]
+
+        if not name or not email:
+            flash('Name and email are required.', 'error')
+            return redirect(url_for('rsvp', training_id=training_id))
+
         # Check for duplicate
         existing = RSVP.query.filter_by(training_id=training_id, email=email).first()
         if existing:
@@ -239,22 +295,39 @@ def rsvp(training_id):
 
         new_rsvp = RSVP(
             training_id=training_id,
-            name=request.form.get('name', '').strip(),
+            name=name,
             email=email,
-            phone=request.form.get('phone', '').strip(),
+            phone=phone,
             district=int(request.form.get('district', 0)) or None,
         )
         db.session.add(new_rsvp)
-        db.session.commit()
+        try:
+            db.session.flush()
+            # Re-check capacity within the transaction to prevent overbooking
+            if RSVP.query.filter_by(training_id=training_id).count() > training.capacity:
+                db.session.rollback()
+                flash('Sorry, this training just filled up.', 'error')
+                return redirect(url_for('rsvp', training_id=training_id))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash('Could not complete your RSVP. Please try again.', 'error')
+            return redirect(url_for('rsvp', training_id=training_id))
 
         # Send emails (non-blocking — if SES fails, RSVP is still saved)
+        email_ok = True
         try:
-            send_rsvp_confirmation(new_rsvp, training)
+            if not send_rsvp_confirmation(new_rsvp, training):
+                email_ok = False
             send_rsvp_notification_to_host(new_rsvp, training)
         except Exception as e:
             logger.error("RSVP email error: %s", e)
+            email_ok = False
 
-        flash("You're registered! Check your email for confirmation details.", 'success')
+        if email_ok:
+            flash("You're registered! Check your email for confirmation details.", 'success')
+        else:
+            flash("You're registered! However, we couldn't send a confirmation email. Your spot is still reserved.", 'warning')
         return redirect(url_for('rsvp', training_id=training_id))
 
     return render_template('rsvp.html', training=training)
@@ -404,8 +477,14 @@ def _point_in_polygon(x, y, coordinates):
 def host_report(host_token):
     training = Training.query.filter_by(host_token=host_token).first_or_404()
 
+    existing_report = Attendance.query.filter_by(training_id=training.id).first()
+
     if request.method == 'POST':
-        count = int(request.form.get('reported_count', 0))
+        if existing_report:
+            flash('An attendance report has already been submitted for this training.', 'warning')
+            return redirect(url_for('host_report', host_token=host_token))
+
+        count = max(0, min(10000, int(request.form.get('reported_count', 0))))
         notes = request.form.get('notes', '').strip()
 
         attendance = Attendance(
@@ -418,8 +497,8 @@ def host_report(host_token):
 
         # Mark individual RSVPs as attended if provided
         attended_ids = request.form.getlist('attended')
-        for rsvp in training.rsvps.all():
-            rsvp.attended = str(rsvp.id) in attended_ids
+        for rsvp_item in training.rsvps.all():
+            rsvp_item.attended = str(rsvp_item.id) in attended_ids
 
         training.status = 'completed'
         db.session.commit()
@@ -428,7 +507,6 @@ def host_report(host_token):
         return redirect(url_for('host_report', host_token=host_token))
 
     rsvps = training.rsvps.all()
-    existing_report = Attendance.query.filter_by(training_id=training.id).first()
     return render_template('host_report.html', training=training,
                            rsvps=rsvps, existing_report=existing_report)
 
@@ -465,8 +543,14 @@ def host_training_report(training_id):
     if training.host_user_id != current_user.id and current_user.role != 'admin':
         abort(403)
 
+    existing_report = Attendance.query.filter_by(training_id=training.id).first()
+
     if request.method == 'POST':
-        count = int(request.form.get('reported_count', 0))
+        if existing_report:
+            flash('An attendance report has already been submitted for this training.', 'warning')
+            return redirect(url_for('host_training_detail', training_id=training_id))
+
+        count = max(0, min(10000, int(request.form.get('reported_count', 0))))
         notes = request.form.get('notes', '').strip()
 
         attendance = Attendance(
@@ -478,8 +562,8 @@ def host_training_report(training_id):
         db.session.add(attendance)
 
         attended_ids = request.form.getlist('attended')
-        for rsvp in training.rsvps.all():
-            rsvp.attended = str(rsvp.id) in attended_ids
+        for rsvp_item in training.rsvps.all():
+            rsvp_item.attended = str(rsvp_item.id) in attended_ids
 
         training.status = 'completed'
         db.session.commit()
@@ -488,7 +572,6 @@ def host_training_report(training_id):
         return redirect(url_for('host_training_detail', training_id=training_id))
 
     rsvps = training.rsvps.all()
-    existing_report = Attendance.query.filter_by(training_id=training.id).first()
     return render_template('host/report.html', training=training,
                            rsvps=rsvps, existing_report=existing_report)
 
@@ -497,11 +580,21 @@ def host_training_report(training_id):
 # CERTIFICATES
 # =========================================================================
 
-@app.route('/certificate/<certificate_number>')
+@app.route('/certificate/<certificate_number>', methods=['GET', 'POST'])
 def download_certificate(certificate_number):
     cert = Certificate.query.filter_by(certificate_number=certificate_number).first_or_404()
     rsvp = cert.rsvp
     training = rsvp.training
+
+    if request.method == 'GET':
+        return render_template('certificate_verify.html',
+                               certificate_number=certificate_number,
+                               training=training)
+
+    submitted_email = request.form.get('email', '').strip().lower()
+    if submitted_email != rsvp.email.lower():
+        flash('The email address does not match our records for this certificate.', 'error')
+        return redirect(url_for('download_certificate', certificate_number=certificate_number))
 
     pdf = generate_certificate(
         name=rsvp.name,
@@ -654,9 +747,24 @@ def admin_approve_training(training_id):
 @admin_required
 def admin_reject_training(training_id):
     training = Training.query.get_or_404(training_id)
+    rsvp_count = training.rsvps.count()
     training.status = 'cancelled'
     db.session.commit()
-    flash(f'Training by {training.host_name} rejected.', 'warning')
+
+    # Notify RSVPed attendees that the training is cancelled
+    notified = 0
+    if rsvp_count > 0:
+        for rsvp_item in training.rsvps.all():
+            try:
+                send_training_cancelled_to_rsvp(rsvp_item, training)
+                notified += 1
+            except Exception as e:
+                logger.error("Cancellation email error for %s: %s", rsvp_item.email, e)
+
+    msg = f'Training by {training.host_name} cancelled.'
+    if notified:
+        msg += f' {notified} RSVP(s) notified.'
+    flash(msg, 'warning')
     return redirect(url_for('admin_trainings'))
 
 
@@ -688,17 +796,29 @@ def admin_rsvps():
 @admin_required
 def admin_attendance(training_id):
     training = Training.query.get_or_404(training_id)
-    count = int(request.form.get('reported_count', 0))
+    try:
+        count = max(0, min(10000, int(request.form.get('reported_count', 0))))
+    except (ValueError, TypeError):
+        flash('Attendance count must be a number.', 'error')
+        return redirect(url_for('admin_trainings'))
     notes = request.form.get('notes', '').strip()
 
-    attendance = Attendance(
-        training_id=training_id,
-        reported_count=count,
-        reported_by='admin',
-        approved=True,
-        notes=notes,
-    )
-    db.session.add(attendance)
+    # Update existing attendance if one exists, otherwise create new
+    existing = Attendance.query.filter_by(training_id=training_id).first()
+    if existing:
+        existing.reported_count = count
+        existing.reported_by = 'admin'
+        existing.approved = True
+        existing.notes = notes
+    else:
+        attendance = Attendance(
+            training_id=training_id,
+            reported_count=count,
+            reported_by='admin',
+            approved=True,
+            notes=notes,
+        )
+        db.session.add(attendance)
 
     if training.status != 'completed':
         training.status = 'completed'
@@ -791,8 +911,13 @@ def admin_export_csv(data_type):
 @app.route('/admin/settings', methods=['POST'])
 @admin_required
 def admin_settings():
-    goal = request.form.get('goal_target', '1000')
-    set_setting('goal_target', goal)
+    try:
+        goal = int(request.form.get('goal_target', '1000'))
+        goal = max(1, min(1000000, goal))
+    except (ValueError, TypeError):
+        flash('Goal target must be a positive number.', 'error')
+        return redirect(url_for('admin_dashboard'))
+    set_setting('goal_target', str(goal))
 
     new_password = request.form.get('new_password', '').strip()
     if new_password:

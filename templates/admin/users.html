@@ -80,7 +80,7 @@
                                 {% if u.id != current_user.id %}
                                 <form method="POST" action="{{ url_for('admin_toggle_user', user_id=u.id) }}" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button class="text-xs {% if u.is_active %}text-red-600 hover:text-red-800{% else %}text-green-600 hover:text-green-800{% endif %}">
+                                    <button onclick="return confirm('Are you sure you want to {% if u.is_active %}disable{% else %}enable{% endif %} {{ u.name }}?')" class="text-xs {% if u.is_active %}text-red-600 hover:text-red-800{% else %}text-green-600 hover:text-green-800{% endif %}">
                                         {% if u.is_active %}Disable{% else %}Enable{% endif %}
                                     </button>
                                 </form>
