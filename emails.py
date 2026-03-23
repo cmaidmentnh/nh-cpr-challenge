@@ -187,6 +187,31 @@ def send_admin_new_host_application(training):
     send_email(admin_email, f'New CPR Training Application — {training.host_name}', html)
 
 
+def send_subscriber_training_notification(subscriber_email, training):
+    """Notify a subscriber that a new training is available in their district."""
+    app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
+    html = _email_wrapper(f"""
+<h2 style="color:#1e3a5f;margin-top:0;">New CPR Training Near You!</h2>
+<p>A free Hands-Only CPR training has been scheduled in your area during EMS Week 2026.</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0;">
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Date</td>
+<td style="padding:8px;">{training.date.strftime('%A, %B %d, %Y')}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Time</td>
+<td style="padding:8px;">{training.start_time or 'TBD'}{(' - ' + training.end_time) if training.end_time else ''}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Location</td>
+<td style="padding:8px;">{training.location_name}<br>{training.address or ''}, {training.city or ''}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Hosted by</td>
+<td style="padding:8px;">{training.organization or training.host_name}</td></tr>
+</table>
+<p>Spots are limited — sign up now to reserve your place!</p>
+<p style="text-align:center;margin-top:24px;">
+<a href="{app_url}/rsvp/{training.id}" style="display:inline-block;padding:12px 24px;background:#d4a843;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">RSVP Now</a>
+</p>
+<p style="color:#64748b;font-size:13px;">You're receiving this because you signed up for CPR training notifications at cprchallengenh.com.</p>
+""")
+    send_email(subscriber_email, f'New CPR Training in {training.city} — {training.date.strftime("%B %d")}', html)
+
+
 def send_host_post_event_reminder(training):
     """Remind host to submit attendance count after their event."""
     app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')

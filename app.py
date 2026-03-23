@@ -23,7 +23,7 @@ from models import db, User, Training, RSVP, Attendance, Certificate, Settings, 
 from emails import (send_rsvp_confirmation, send_rsvp_notification_to_host,
                     send_training_approved, send_certificate_ready,
                     send_host_application_received, send_admin_new_host_application,
-                    send_host_post_event_reminder)
+                    send_host_post_event_reminder, send_subscriber_training_notification)
 from certificates import generate_certificate
 from geocode import geocode_address
 
@@ -632,7 +632,21 @@ def admin_approve_training(training_id):
     except Exception as e:
         logger.error("Training approval email error: %s", e)
 
-    flash(f'Training by {training.host_name} approved.', 'success')
+    # Notify subscribers in this district
+    subscribers = Subscriber.query.filter(
+        (Subscriber.district == training.district) | (Subscriber.district.is_(None))
+    ).all()
+    notified = 0
+    for sub in subscribers:
+        try:
+            send_subscriber_training_notification(sub.email, training)
+            notified += 1
+        except Exception as e:
+            logger.error("Subscriber notification error for %s: %s", sub.email, e)
+    if notified:
+        logger.info("Notified %d subscriber(s) for training %d", notified, training.id)
+
+    flash(f'Training by {training.host_name} approved. {notified} subscriber(s) notified.', 'success')
     return redirect(url_for('admin_trainings'))
 
 
