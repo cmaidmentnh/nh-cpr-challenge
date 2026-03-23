@@ -6,13 +6,20 @@ from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.units import inch
 from reportlab.lib.colors import HexColor
 from reportlab.pdfgen import canvas
-
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 NAVY = HexColor('#0d1b2a')
 NAVY_MED = HexColor('#1e3a5f')
 GOLD = HexColor('#c5a55a')
 DARK_TEXT = HexColor('#1a1a2e')
 GRAY = HexColor('#64748b')
+
+# Register Lato font family
+_fonts_dir = os.path.join(os.path.dirname(__file__), 'static', 'fonts')
+pdfmetrics.registerFont(TTFont('Lato', os.path.join(_fonts_dir, 'Lato-Regular.ttf')))
+pdfmetrics.registerFont(TTFont('Lato-Bold', os.path.join(_fonts_dir, 'Lato-Bold.ttf')))
+pdfmetrics.registerFont(TTFont('Lato-Italic', os.path.join(_fonts_dir, 'Lato-Italic.ttf')))
 
 
 def generate_certificate(name, date_str, location, certificate_number):
@@ -52,12 +59,12 @@ def generate_certificate(name, date_str, location, certificate_number):
 
     # Subtitle
     c.setFillColor(GOLD)
-    c.setFont('Helvetica', 12)
+    c.setFont('Lato', 12)
     c.drawCentredString(width / 2, height - 3.15 * inch, 'NH EMS Week CPR Challenge 2026')
 
     # "This certifies that"
     c.setFillColor(DARK_TEXT)
-    c.setFont('Helvetica', 11)
+    c.setFont('Lato', 11)
     c.drawCentredString(width / 2, height - 3.7 * inch, 'This certifies that')
 
     # Participant name
@@ -81,33 +88,33 @@ def generate_certificate(name, date_str, location, certificate_number):
 
     # Description
     c.setFillColor(DARK_TEXT)
-    c.setFont('Helvetica', 11)
+    c.setFont('Lato', 11)
     c.drawCentredString(width / 2, height - 4.85 * inch,
                          'completed Hands-Only CPR awareness training')
     c.drawCentredString(width / 2, height - 5.1 * inch,
                          'during the New Hampshire EMS Week CPR Challenge')
 
     # Date and location
-    c.setFont('Helvetica-Bold', 11)
+    c.setFont('Lato-Bold', 11)
     date_loc = f'{date_str}  |  {location}'
     c.drawCentredString(width / 2, height - 5.55 * inch, date_loc)
 
     # "A bipartisan initiative"
     c.setFillColor(NAVY_MED)
-    c.setFont('Helvetica', 9)
+    c.setFont('Lato', 9)
     c.drawCentredString(width / 2, height - 5.95 * inch,
                          'A bipartisan initiative of the New Hampshire Executive Council')
 
     # Disclaimer
     c.setFillColor(GRAY)
-    c.setFont('Helvetica', 7.5)
+    c.setFont('Lato', 7.5)
     c.drawCentredString(width / 2, 1.55 * inch,
                          'This certificate recognizes participation in Hands-Only CPR awareness training.')
     c.drawCentredString(width / 2, 1.35 * inch,
                          'It is NOT an official CPR certification from the American Heart Association, Red Cross, or any other certifying body.')
 
     # Certificate number
-    c.setFont('Helvetica', 7)
+    c.setFont('Lato', 7)
     c.drawCentredString(width / 2, 1.15 * inch,
                          f'Certificate #{certificate_number}')
 
