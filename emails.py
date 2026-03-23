@@ -1,11 +1,14 @@
 """Email notifications via AWS SES."""
 
+import logging
 import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import boto3
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger(__name__)
 
 
 def get_ses_client():
@@ -40,7 +43,7 @@ def send_email(to, subject, html_body, plain_body=None):
         )
         return True
     except ClientError as e:
-        print(f"SES error sending to {to}: {e}")
+        logger.error("SES error sending to %s: %s", to, e)
         return False
 
 
@@ -155,7 +158,7 @@ def send_admin_new_host_application(training):
     """Notify admin that a new host training application was submitted."""
     admin_email = os.getenv('ADMIN_EMAIL', '')
     if not admin_email:
-        print("ADMIN_EMAIL not set, skipping admin notification")
+        logger.warning("ADMIN_EMAIL not set, skipping admin notification")
         return
     app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
     html = _email_wrapper(f"""

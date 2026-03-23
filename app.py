@@ -2,6 +2,7 @@
 """NH EMS Week CPR Challenge — Flask Application."""
 
 import csv
+import logging
 import os
 import secrets
 import string
@@ -27,6 +28,9 @@ from certificates import generate_certificate
 from geocode import geocode_address
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-change-me')
@@ -202,12 +206,12 @@ def host():
         try:
             send_host_application_received(training)
         except Exception as e:
-            print(f"Host confirmation email error: {e}")
+            logger.error("Host confirmation email error: %s", e)
 
         try:
             send_admin_new_host_application(training)
         except Exception as e:
-            print(f"Admin notification email error: {e}")
+            logger.error("Admin notification email error: %s", e)
 
         flash('Thank you! Your training application has been submitted and is pending review. Check your email for confirmation.', 'success')
         return redirect(url_for('host'))
@@ -248,7 +252,7 @@ def rsvp(training_id):
             send_rsvp_confirmation(new_rsvp, training)
             send_rsvp_notification_to_host(new_rsvp, training)
         except Exception as e:
-            print(f"Email error: {e}")
+            logger.error("RSVP email error: %s", e)
 
         flash("You're registered! Check your email for confirmation details.", 'success')
         return redirect(url_for('rsvp', training_id=training_id))
@@ -626,7 +630,7 @@ def admin_approve_training(training_id):
     try:
         send_training_approved(training)
     except Exception as e:
-        print(f"Email error: {e}")
+        logger.error("Training approval email error: %s", e)
 
     flash(f'Training by {training.host_name} approved.', 'success')
     return redirect(url_for('admin_trainings'))
@@ -717,7 +721,7 @@ def admin_issue_certificates(training_id):
                 db.session.flush()
                 send_certificate_ready(rsvp, cert)
             except Exception as e:
-                print(f"Certificate email error: {e}")
+                logger.error("Certificate email error: %s", e)
     db.session.commit()
     flash(f'{issued} certificates issued.', 'success')
     return redirect(url_for('admin_trainings'))
@@ -964,10 +968,10 @@ def send_post_event_reminders():
         try:
             send_host_post_event_reminder(t)
             sent += 1
-            print(f"Sent reminder to {t.host_email} for {t.location_name}")
+            logger.info("Sent reminder to %s for %s", t.host_email, t.location_name)
         except Exception as e:
-            print(f"Error sending to {t.host_email}: {e}")
-    print(f"Done. Sent {sent} reminder(s).")
+            logger.error("Error sending reminder to %s: %s", t.host_email, e)
+    logger.info("Done. Sent %d reminder(s).", sent)
 
 
 # ---------------------------------------------------------------------------
