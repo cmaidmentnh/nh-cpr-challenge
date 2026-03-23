@@ -29,6 +29,9 @@ def send_email(to, subject, html_body, plain_body=None):
     msg['Subject'] = subject
     msg['From'] = f'{sender_name} <{sender_email}>'
     msg['To'] = to
+    msg['Reply-To'] = sender_email
+    msg['List-Unsubscribe'] = f'<mailto:{sender_email}?subject=unsubscribe>'
+    msg['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'
 
     if plain_body:
         msg.attach(MIMEText(plain_body, 'plain'))
