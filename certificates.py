@@ -103,7 +103,7 @@ def generate_certificate(name, date_str, location, certificate_number):
     c.setFillColor(NAVY_MED)
     c.setFont('Lato', 9)
     c.drawCentredString(width / 2, height - 5.95 * inch,
-                         'A bipartisan initiative of the New Hampshire Executive Council')
+                         'A Bipartisan Initiative of the New Hampshire Executive Council')
 
     # Disclaimer
     c.setFillColor(GRAY)
