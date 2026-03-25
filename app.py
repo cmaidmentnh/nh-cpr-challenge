@@ -13,8 +13,6 @@ from io import BytesIO, StringIO
 from flask import (Flask, render_template, request, jsonify, redirect,
                    url_for, session, send_file, flash, abort, Response, make_response)
 from flask_wtf.csrf import CSRFProtect
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
@@ -42,7 +40,6 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db.init_app(app)
 csrf = CSRFProtect(app)
-limiter = Limiter(get_remote_address, app=app, default_limits=['200 per day', '50 per hour'])
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -180,7 +177,6 @@ def trainings():
 
 
 @app.route('/host', methods=['GET', 'POST'])
-@limiter.limit('10 per hour', methods=['POST'])
 def host():
     if request.method == 'POST':
         host_name = request.form.get('host_name', '').strip()[:200]
@@ -268,7 +264,6 @@ def host():
 
 
 @app.route('/rsvp/<int:training_id>', methods=['GET', 'POST'])
-@limiter.limit('20 per hour', methods=['POST'])
 def rsvp(training_id):
     training = Training.query.get_or_404(training_id)
     if training.status != 'approved':
@@ -360,7 +355,6 @@ def leaderboard():
 
 
 @app.route('/subscribe', methods=['POST'])
-@limiter.limit('10 per hour', methods=['POST'])
 def subscribe():
     email = request.form.get('email', '').strip().lower()
     district = request.form.get('district', type=int)
@@ -616,7 +610,6 @@ def download_certificate(certificate_number):
 # =========================================================================
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit('5 per minute', methods=['POST'])
 def login():
     if current_user.is_authenticated:
         if current_user.role == 'admin':
