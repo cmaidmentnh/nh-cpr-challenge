@@ -658,6 +658,9 @@ def admin_dashboard():
     completed = Training.query.filter_by(status='completed').count()
     total_rsvps = RSVP.query.count()
     total_subscribers = Subscriber.query.count()
+    subscriber_by_district = dict(db.session.query(
+        Subscriber.district, db.func.count()
+    ).group_by(Subscriber.district).all())
     total_users = User.query.count()
     district_counts = get_district_counts()
     total_trained = sum(district_counts.values())
@@ -675,6 +678,7 @@ def admin_dashboard():
                            completed=completed,
                            total_rsvps=total_rsvps,
                            total_subscribers=total_subscribers,
+                           subscriber_by_district=subscriber_by_district,
                            total_users=total_users,
                            district_counts=district_counts,
                            total_trained=total_trained,
