@@ -17,7 +17,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
-from models import db, User, Training, RSVP, Attendance, Certificate, Settings, Subscriber, COUNCILORS, DISTRICT_COLORS
+from models import db, User, Training, RSVP, Attendance, Certificate, Settings, Subscriber, DistrictPOC, COUNCILORS, DISTRICT_COLORS
 from emails import (send_rsvp_confirmation, send_rsvp_notification_to_host,
                     send_training_approved, send_certificate_ready,
                     send_host_application_received, send_admin_new_host_application,
@@ -997,6 +997,54 @@ def admin_reset_password(user_id):
     db.session.commit()
     flash(f'Password reset for {user.name}.', 'success')
     return redirect(url_for('admin_users'))
+
+
+# =========================================================================
+# DISTRICT POCs
+# =========================================================================
+
+@app.route('/admin/districts')
+@admin_required
+def admin_districts():
+    pocs = {p.district: p for p in DistrictPOC.query.all()}
+    return render_template('admin/districts.html', pocs=pocs)
+
+
+@app.route('/admin/districts/<int:district>', methods=['POST'])
+@admin_required
+def admin_update_poc(district):
+    if district < 1 or district > 5:
+        abort(404)
+    name = request.form.get('name', '').strip()
+    email = request.form.get('email', '').strip()
+    phone = request.form.get('phone', '').strip()
+
+    if not name or not email:
+        flash('Name and email are required.', 'error')
+        return redirect(url_for('admin_districts'))
+
+    poc = DistrictPOC.query.filter_by(district=district).first()
+    if poc:
+        poc.name = name
+        poc.email = email
+        poc.phone = phone
+    else:
+        poc = DistrictPOC(district=district, name=name, email=email, phone=phone)
+        db.session.add(poc)
+
+    db.session.commit()
+    flash(f'District {district} POC updated.', 'success')
+    return redirect(url_for('admin_districts'))
+
+
+@app.route('/admin/districts/<int:district>/delete', methods=['POST'])
+@admin_required
+def admin_delete_poc(district):
+    poc = DistrictPOC.query.filter_by(district=district).first_or_404()
+    db.session.delete(poc)
+    db.session.commit()
+    flash(f'District {district} POC removed.', 'success')
+    return redirect(url_for('admin_districts'))
 
 
 # =========================================================================

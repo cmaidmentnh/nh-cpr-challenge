@@ -27,6 +27,11 @@
                    {% if request.endpoint in ('admin_users', 'admin_create_user') %}text-white bg-navy-700{% else %}text-navy-300 hover:text-white hover:bg-navy-800{% endif %}">
                     Users
                 </a>
+                <a href="{{ url_for('admin_districts') }}"
+                   class="px-3 py-2 text-sm font-medium rounded transition
+                   {% if request.endpoint in ('admin_districts', 'admin_update_poc') %}text-white bg-navy-700{% else %}text-navy-300 hover:text-white hover:bg-navy-800{% endif %}">
+                    Districts
+                </a>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-navy-400 text-xs hidden sm:block">{{ current_user.name }}</span>

@@ -195,6 +195,17 @@ class Subscriber(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class DistrictPOC(db.Model):
+    __tablename__ = 'district_pocs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    district = db.Column(db.Integer, unique=True, nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    email = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Settings(db.Model):
     __tablename__ = 'settings'
 
