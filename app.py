@@ -203,8 +203,8 @@ def host():
 
         try:
             training_date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
-            if training_date < date(2026, 5, 17) or training_date > date(2026, 5, 23):
-                errors.append('Date must be during EMS Week (May 17-23, 2026).')
+            if training_date < date(2026, 1, 1) or training_date > date(2026, 5, 23):
+                errors.append('Date must be in 2026, on or before May 23.')
         except (ValueError, KeyError):
             errors.append('A valid date is required.')
             training_date = None
