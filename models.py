@@ -108,6 +108,7 @@ class Training(db.Model):
     description = db.Column(db.Text)
     status = db.Column(db.String(20), default='pending')
     materials_needed = db.Column(db.Boolean, default=False)
+    internal_only = db.Column(db.Boolean, default=False, nullable=False)
     host_token = db.Column(db.String(64), unique=True)
     host_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

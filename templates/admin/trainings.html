@@ -32,6 +32,9 @@
                             {% else %}bg-gray-100 text-gray-600{% endif %}">
                             {{ t.status }}
                         </span>
+                        {% if t.internal_only %}
+                        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Internal only</span>
+                        {% endif %}
                     </div>
                     <h3 class="font-bold text-navy-900 text-lg">{{ t.location_name }}</h3>
                     <p class="text-gray-600 text-sm">{{ t.host_name }}{% if t.organization %} ({{ t.organization }}){% endif %} &middot; {{ t.host_email }}</p>

@@ -153,7 +153,7 @@ def index():
     district_counts = get_district_counts()
     total = sum(district_counts.values())
     goal = int(get_setting('goal_target', '1000'))
-    upcoming = Training.query.filter_by(status='approved').filter(
+    upcoming = Training.query.filter_by(status='approved', internal_only=False).filter(
         Training.date >= date.today()
     ).order_by(Training.date).limit(3).all()
     return render_template('index.html',
@@ -166,7 +166,7 @@ def index():
 @app.route('/trainings')
 def trainings():
     district_filter = request.args.get('district', type=int)
-    query = Training.query.filter_by(status='approved').filter(
+    query = Training.query.filter_by(status='approved', internal_only=False).filter(
         Training.date >= date.today()
     ).order_by(Training.date)
     if district_filter:
@@ -236,6 +236,7 @@ def host():
             start_time=start_time, end_time=end_time,
             capacity=capacity, description=description,
             materials_needed='materials_needed' in request.form,
+            internal_only='internal_only' in request.form,
             status='pending',
             host_user_id=current_user.id if current_user.is_authenticated else None,
         )
@@ -385,7 +386,7 @@ def subscribe():
 @csrf.exempt
 @app.route('/api/trainings')
 def api_trainings():
-    query = Training.query.filter_by(status='approved')
+    query = Training.query.filter_by(status='approved', internal_only=False)
     district = request.args.get('district', type=int)
     if district:
         query = query.filter_by(district=district)
@@ -1070,7 +1071,7 @@ def sitemap():
                    f'<changefreq>{freq}</changefreq>'
                    f'<priority>{priority}</priority></url>')
     # Add individual training pages
-    for t in Training.query.filter_by(status='approved').all():
+    for t in Training.query.filter_by(status='approved', internal_only=False).all():
         xml.append(f'<url><loc>{base}/rsvp/{t.id}</loc>'
                    f'<changefreq>weekly</changefreq>'
                    f'<priority>0.6</priority></url>')
@@ -1171,6 +1172,10 @@ def init_db():
     if 'host_user_id' not in columns:
         with db.engine.connect() as conn:
             conn.execute(text('ALTER TABLE trainings ADD COLUMN host_user_id INTEGER REFERENCES users(id)'))
+            conn.commit()
+    if 'internal_only' not in columns:
+        with db.engine.connect() as conn:
+            conn.execute(text('ALTER TABLE trainings ADD COLUMN internal_only BOOLEAN NOT NULL DEFAULT 0'))
             conn.commit()
 
     # Create default admin user if none exists
