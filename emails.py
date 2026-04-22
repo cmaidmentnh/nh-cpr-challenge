@@ -148,11 +148,15 @@ def send_training_approved(training):
 <tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Location</td>
 <td style="padding:8px;">{training.location_name}</td></tr>
 </table>
-<p>After your event, please use this link to report attendance:</p>
+<p><strong>On the day of your training</strong>, use the check-in page to tap each person in as they arrive — you can also add walk-ins. When you're done, tap "End Training" to finalize attendance and automatically issue certificates.</p>
 <p style="text-align:center;margin-top:24px;">
-<a href="{app_url}/host/report/{training.host_token}" style="display:inline-block;padding:12px 24px;background:#1e3a5f;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Report Attendance</a>
+<a href="{app_url}/host/checkin/{training.host_token}" style="display:inline-block;padding:12px 24px;background:#1e3a5f;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Open Check-In Page</a>
 </p>
-<p style="color:#64748b;font-size:13px;">Keep this link private — it's your unique portal for managing your training event.</p>
+<p>If you'd rather report the total afterward instead of using check-in:</p>
+<p style="text-align:center;">
+<a href="{app_url}/host/report/{training.host_token}" style="display:inline-block;padding:10px 20px;background:#d4a843;color:#1e3a5f;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px;">Report Attendance (After Event)</a>
+</p>
+<p style="color:#64748b;font-size:13px;">Keep these links private — they're your unique portal for managing your training event.</p>
 """)
     return send_email(training.host_email, 'Your CPR Training Has Been Approved!', html)
 

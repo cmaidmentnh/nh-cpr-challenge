@@ -171,7 +171,7 @@ def trainings():
     ).order_by(Training.date)
     if district_filter:
         query = query.filter_by(district=district_filter)
-    all_trainings = query.all()
+    all_trainings = sorted(query.all(), key=lambda t: (t.is_full, t.date))
     return render_template('trainings.html', trainings=all_trainings,
                            district_filter=district_filter)
 
@@ -274,6 +274,7 @@ def rsvp(training_id):
         email = request.form.get('email', '').strip().lower()[:200]
         name = request.form.get('name', '').strip()[:200]
         phone = request.form.get('phone', '').strip()[:20]
+        switch = 'switch_from_other' in request.form
 
         if not name or not email:
             flash('Name and email are required.', 'error')
@@ -288,6 +289,16 @@ def rsvp(training_id):
         if training.is_full:
             flash('Sorry, this training is full.', 'error')
             return redirect(url_for('rsvp', training_id=training_id))
+
+        switched_from = 0
+        if switch:
+            prior = RSVP.query.filter(
+                RSVP.email == email,
+                RSVP.training_id != training_id,
+            ).join(Training).filter(Training.date >= date.today()).all()
+            for r in prior:
+                db.session.delete(r)
+            switched_from = len(prior)
 
         new_rsvp = RSVP(
             training_id=training_id,
@@ -309,6 +320,9 @@ def rsvp(training_id):
             db.session.rollback()
             flash('Could not complete your RSVP. Please try again.', 'error')
             return redirect(url_for('rsvp', training_id=training_id))
+
+        if switched_from:
+            flash(f'We removed your RSVP from {switched_from} other upcoming training{"s" if switched_from != 1 else ""}.', 'info')
 
         # Send emails (non-blocking — if SES fails, RSVP is still saved)
         email_ok = True
@@ -529,6 +543,183 @@ def host_training_detail(training_id):
     existing_report = Attendance.query.filter_by(training_id=training.id).first()
     return render_template('host/training_detail.html', training=training,
                            rsvps=rsvps, existing_report=existing_report)
+
+
+# ---------------------------------------------------------------------------
+# Day-of check-in helpers
+# ---------------------------------------------------------------------------
+WALKIN_EMAIL_DOMAIN = 'walkin.local'
+
+
+def _close_training_as_host(training):
+    """Finalize a training from the check-in flow.
+
+    Creates the Attendance record, issues certificates to attended RSVPs, and
+    marks the training completed. Returns counts for a user-facing flash.
+    """
+    if training.status == 'completed':
+        return {'already_closed': True, 'issued': 0, 'attended': 0}
+
+    attended_rsvps = training.rsvps.filter_by(attended=True).all()
+
+    att = Attendance.query.filter_by(training_id=training.id).first()
+    if not att:
+        att = Attendance(
+            training_id=training.id,
+            reported_count=len(attended_rsvps),
+            reported_by='host-checkin',
+            approved=False,
+        )
+        db.session.add(att)
+    else:
+        att.reported_count = len(attended_rsvps)
+
+    issued = 0
+    for rsvp in attended_rsvps:
+        if rsvp.certificate:
+            continue
+        cert = Certificate(rsvp_id=rsvp.id, certificate_number=generate_cert_number())
+        db.session.add(cert)
+        db.session.flush()
+        issued += 1
+        if not rsvp.email.endswith('@' + WALKIN_EMAIL_DOMAIN):
+            try:
+                send_certificate_ready(rsvp, cert)
+            except Exception as e:
+                logger.error("Certificate email error: %s", e)
+
+    training.status = 'completed'
+    db.session.commit()
+    return {'already_closed': False, 'issued': issued, 'attended': len(attended_rsvps)}
+
+
+def _add_walkin(training, name, email, phone):
+    name = name.strip()[:200]
+    email = (email or '').strip().lower()[:200]
+    phone = (phone or '').strip()[:20]
+    if not name:
+        return None, 'Name is required.'
+    if not email:
+        email = f'walkin-{secrets.token_hex(4)}@{WALKIN_EMAIL_DOMAIN}'
+    if RSVP.query.filter_by(training_id=training.id, email=email).first():
+        return None, 'Someone with that email has already RSVPed for this training.'
+    rsvp = RSVP(
+        training_id=training.id,
+        name=name,
+        email=email,
+        phone=phone,
+        attended=True,
+    )
+    db.session.add(rsvp)
+    db.session.commit()
+    return rsvp, None
+
+
+def _render_checkin(training, base_url):
+    rsvps = training.rsvps.order_by(RSVP.name.asc()).all()
+    attended_count = sum(1 for r in rsvps if r.attended)
+    return render_template(
+        'host/checkin.html',
+        training=training,
+        rsvps=rsvps,
+        attended_count=attended_count,
+        base_url=base_url,
+        is_training_day=(training.date <= date.today()),
+    )
+
+
+@app.route('/host/training/<int:training_id>/checkin')
+@host_or_admin_required
+def host_training_checkin(training_id):
+    training = Training.query.get_or_404(training_id)
+    if training.host_user_id != current_user.id and current_user.role != 'admin':
+        abort(403)
+    return _render_checkin(training, f'/host/training/{training.id}/checkin')
+
+
+@app.route('/host/training/<int:training_id>/checkin/toggle/<int:rsvp_id>', methods=['POST'])
+@host_or_admin_required
+def host_training_checkin_toggle(training_id, rsvp_id):
+    training = Training.query.get_or_404(training_id)
+    if training.host_user_id != current_user.id and current_user.role != 'admin':
+        abort(403)
+    if training.status == 'completed':
+        return jsonify({'ok': False, 'error': 'Training is already closed.'}), 400
+    rsvp = training.rsvps.filter_by(id=rsvp_id).first_or_404()
+    rsvp.attended = not bool(rsvp.attended)
+    db.session.commit()
+    return jsonify({'ok': True, 'attended': bool(rsvp.attended)})
+
+
+@app.route('/host/training/<int:training_id>/checkin/walkin', methods=['POST'])
+@host_or_admin_required
+def host_training_checkin_walkin(training_id):
+    training = Training.query.get_or_404(training_id)
+    if training.host_user_id != current_user.id and current_user.role != 'admin':
+        abort(403)
+    if training.status == 'completed':
+        flash('Training is already closed.', 'error')
+        return redirect(url_for('host_training_checkin', training_id=training.id))
+    rsvp, err = _add_walkin(training, request.form.get('name', ''),
+                             request.form.get('email', ''),
+                             request.form.get('phone', ''))
+    flash(err or f'Checked in {rsvp.name}.', 'error' if err else 'success')
+    return redirect(url_for('host_training_checkin', training_id=training.id))
+
+
+@app.route('/host/training/<int:training_id>/checkin/close', methods=['POST'])
+@host_or_admin_required
+def host_training_checkin_close(training_id):
+    training = Training.query.get_or_404(training_id)
+    if training.host_user_id != current_user.id and current_user.role != 'admin':
+        abort(403)
+    result = _close_training_as_host(training)
+    if result['already_closed']:
+        flash('This training has already been closed.', 'warning')
+    else:
+        flash(f'Training closed. {result["attended"]} attendee(s); {result["issued"]} certificate(s) issued and emailed.', 'success')
+    return redirect(url_for('host_training_detail', training_id=training.id))
+
+
+@app.route('/host/checkin/<host_token>')
+def host_checkin_token(host_token):
+    training = Training.query.filter_by(host_token=host_token).first_or_404()
+    return _render_checkin(training, f'/host/checkin/{host_token}')
+
+
+@app.route('/host/checkin/<host_token>/toggle/<int:rsvp_id>', methods=['POST'])
+def host_checkin_token_toggle(host_token, rsvp_id):
+    training = Training.query.filter_by(host_token=host_token).first_or_404()
+    if training.status == 'completed':
+        return jsonify({'ok': False, 'error': 'Training is already closed.'}), 400
+    rsvp = training.rsvps.filter_by(id=rsvp_id).first_or_404()
+    rsvp.attended = not bool(rsvp.attended)
+    db.session.commit()
+    return jsonify({'ok': True, 'attended': bool(rsvp.attended)})
+
+
+@app.route('/host/checkin/<host_token>/walkin', methods=['POST'])
+def host_checkin_token_walkin(host_token):
+    training = Training.query.filter_by(host_token=host_token).first_or_404()
+    if training.status == 'completed':
+        flash('Training is already closed.', 'error')
+        return redirect(url_for('host_checkin_token', host_token=host_token))
+    rsvp, err = _add_walkin(training, request.form.get('name', ''),
+                             request.form.get('email', ''),
+                             request.form.get('phone', ''))
+    flash(err or f'Checked in {rsvp.name}.', 'error' if err else 'success')
+    return redirect(url_for('host_checkin_token', host_token=host_token))
+
+
+@app.route('/host/checkin/<host_token>/close', methods=['POST'])
+def host_checkin_token_close(host_token):
+    training = Training.query.filter_by(host_token=host_token).first_or_404()
+    result = _close_training_as_host(training)
+    if result['already_closed']:
+        flash('This training has already been closed.', 'warning')
+    else:
+        flash(f'Training closed. {result["attended"]} attendee(s); {result["issued"]} certificate(s) issued and emailed.', 'success')
+    return redirect(url_for('host_checkin_token', host_token=host_token))
 
 
 @app.route('/host/training/<int:training_id>/report', methods=['GET', 'POST'])
@@ -840,6 +1031,9 @@ def admin_approve_attendance(attendance_id):
 @admin_required
 def admin_issue_certificates(training_id):
     training = Training.query.get_or_404(training_id)
+    if training.status != 'completed':
+        flash('Training must be completed (attendance reported or check-in closed) before issuing certificates.', 'error')
+        return redirect(url_for('admin_trainings'))
     issued = 0
     for rsvp in training.rsvps.filter_by(attended=True).all():
         if not rsvp.certificate:
@@ -851,7 +1045,8 @@ def admin_issue_certificates(training_id):
             issued += 1
             try:
                 db.session.flush()
-                send_certificate_ready(rsvp, cert)
+                if not rsvp.email.endswith('@' + WALKIN_EMAIL_DOMAIN):
+                    send_certificate_ready(rsvp, cert)
             except Exception as e:
                 logger.error("Certificate email error: %s", e)
     db.session.commit()

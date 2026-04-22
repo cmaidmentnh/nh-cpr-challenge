@@ -5,11 +5,18 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <a href="{{ url_for('host_dashboard') }}" class="text-navy-600 hover:text-navy-800 text-sm">&larr; My Trainings</a>
-        {% if training.status in ('approved', 'completed') %}
-        <a href="{{ url_for('host_training_report', training_id=training.id) }}" class="bg-gold text-navy-900 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gold-dark transition">
-            {% if existing_report %}View Report{% else %}Report Attendance{% endif %}
-        </a>
-        {% endif %}
+        <div class="flex gap-2">
+            {% if training.status == 'approved' %}
+            <a href="{{ url_for('host_training_checkin', training_id=training.id) }}" class="bg-navy-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-navy-800 transition">
+                Check In Attendees
+            </a>
+            {% endif %}
+            {% if training.status in ('approved', 'completed') %}
+            <a href="{{ url_for('host_training_report', training_id=training.id) }}" class="bg-gold text-navy-900 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gold-dark transition">
+                {% if existing_report %}View Report{% else %}Report Attendance{% endif %}
+            </a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Training Info -->
