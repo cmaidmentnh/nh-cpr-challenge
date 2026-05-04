@@ -216,7 +216,7 @@ def send_subscriber_training_notification(subscriber_email, training):
 </p>
 <p style="color:#64748b;font-size:13px;">You're receiving this because you signed up for CPR training notifications at cprchallengenh.com.</p>
 """)
-    send_email(subscriber_email, f'New CPR Training in {training.city} — {training.date.strftime("%B %d")}', html)
+    return send_email(subscriber_email, f'New CPR Training in {training.city} — {training.date.strftime("%B %d")}', html)
 
 
 def send_training_cancelled_to_rsvp(rsvp, training):
