@@ -914,6 +914,11 @@ def admin_approve_training(training_id):
     except Exception as e:
         logger.error("Training approval email error: %s", e)
 
+    # Internal-only trainings don't notify subscribers — they're not public.
+    if training.internal_only:
+        flash(f'Training approved (internal-only — subscribers were not notified).', 'success')
+        return redirect(url_for('admin_trainings'))
+
     # Notify subscribers in this district
     subscribers = Subscriber.query.filter(
         (Subscriber.district == training.district) | (Subscriber.district.is_(None))
