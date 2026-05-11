@@ -267,7 +267,7 @@ def host():
 @app.route('/rsvp/<int:training_id>', methods=['GET', 'POST'])
 def rsvp(training_id):
     training = Training.query.get_or_404(training_id)
-    if training.status != 'approved' or training.internal_only:
+    if training.status != 'approved':
         abort(404)
 
     if request.method == 'POST':
