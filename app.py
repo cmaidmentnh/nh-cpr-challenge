@@ -300,12 +300,16 @@ def rsvp(training_id):
                 db.session.delete(r)
             switched_from = len(prior)
 
+        try:
+            district_val = int(request.form.get('district') or 0) or None
+        except ValueError:
+            district_val = None
         new_rsvp = RSVP(
             training_id=training_id,
             name=name,
             email=email,
             phone=phone,
-            district=int(request.form.get('district', 0)) or None,
+            district=district_val,
         )
         db.session.add(new_rsvp)
         try:
@@ -673,6 +677,9 @@ def host_training_checkin_close(training_id):
     training = Training.query.get_or_404(training_id)
     if training.host_user_id != current_user.id and current_user.role != 'admin':
         abort(403)
+    if training.date > date.today() and current_user.role != 'admin':
+        flash(f'Training can only be ended on or after the scheduled date ({training.date.strftime("%B %-d, %Y")}). It looks like you may have clicked End Training by accident.', 'error')
+        return redirect(url_for('host_training_checkin', training_id=training.id))
     result = _close_training_as_host(training)
     if result['already_closed']:
         flash('This training has already been closed.', 'warning')
@@ -714,6 +721,9 @@ def host_checkin_token_walkin(host_token):
 @app.route('/host/checkin/<host_token>/close', methods=['POST'])
 def host_checkin_token_close(host_token):
     training = Training.query.filter_by(host_token=host_token).first_or_404()
+    if training.date > date.today():
+        flash(f'Training can only be ended on or after the scheduled date ({training.date.strftime("%B %-d, %Y")}). It looks like you may have clicked End Training by accident.', 'error')
+        return redirect(url_for('host_checkin_token', host_token=host_token))
     result = _close_training_as_host(training)
     if result['already_closed']:
         flash('This training has already been closed.', 'warning')
