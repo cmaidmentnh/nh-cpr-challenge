@@ -1369,6 +1369,36 @@ def send_post_event_reminders():
     logger.info("Done. Sent %d reminder(s).", sent)
 
 
+@app.cli.command('send-attendee-reminders')
+def send_attendee_reminders():
+    """Email each RSVP'd attendee a reminder ~24 hours before their training."""
+    from datetime import timedelta
+    from emails import send_rsvp_reminder
+    tomorrow = date.today() + timedelta(days=1)
+    trainings = Training.query.filter(
+        Training.status == 'approved',
+        Training.date == tomorrow,
+    ).all()
+    sent = 0
+    for t in trainings:
+        rsvps = RSVP.query.filter(
+            RSVP.training_id == t.id,
+            RSVP.reminder_sent_at.is_(None),
+        ).all()
+        for r in rsvps:
+            # Skip walk-in placeholder emails
+            if r.email.endswith('@' + WALKIN_EMAIL_DOMAIN):
+                continue
+            try:
+                if send_rsvp_reminder(r, t):
+                    r.reminder_sent_at = datetime.utcnow()
+                    sent += 1
+            except Exception as e:
+                logger.error("Attendee reminder error %s: %s", r.email, e)
+        db.session.commit()
+    logger.info("Sent %d attendee reminder(s) for %d training(s) on %s.", sent, len(trainings), tomorrow)
+
+
 # ---------------------------------------------------------------------------
 # DB Init
 # ---------------------------------------------------------------------------
@@ -1386,6 +1416,12 @@ def init_db():
     if 'internal_only' not in columns:
         with db.engine.connect() as conn:
             conn.execute(text('ALTER TABLE trainings ADD COLUMN internal_only BOOLEAN NOT NULL DEFAULT 0'))
+            conn.commit()
+
+    rsvp_columns = [c['name'] for c in inspector.get_columns('rsvps')]
+    if 'reminder_sent_at' not in rsvp_columns:
+        with db.engine.connect() as conn:
+            conn.execute(text('ALTER TABLE rsvps ADD COLUMN reminder_sent_at DATETIME'))
             conn.commit()
 
     # Create default admin user if none exists

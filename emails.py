@@ -258,6 +258,32 @@ def send_host_post_event_reminder(training):
     send_email(training.host_email, 'How did your CPR training go? Please report attendance', html)
 
 
+def send_rsvp_reminder(rsvp, training):
+    """Send a 24-hour reminder to an attendee before their training."""
+    app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
+    date_str = training.date.strftime('%A, %B %-d, %Y')
+    time_str = training.start_time or 'TBD'
+    if training.end_time:
+        time_str = f'{time_str} – {training.end_time}'
+    addr = ', '.join(p for p in [training.address, training.city] if p)
+    html = _email_wrapper(f"""
+<h2 style="color:#1e3a5f;margin-top:0;">Reminder: your CPR training is tomorrow</h2>
+<p>Hi {rsvp.name},</p>
+<p>This is a quick reminder that you're signed up for a free Hands-Only CPR training tomorrow. Here are the details:</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0;">
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;width:30%;">Date</td><td style="padding:8px;">{date_str}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Time</td><td style="padding:8px;">{time_str}</td></tr>
+<tr><td style="padding:8px;font-weight:bold;color:#1e3a5f;">Location</td><td style="padding:8px;"><strong>{training.location_name}</strong><br>{addr}</td></tr>
+</table>
+<p><strong>What to expect:</strong> About 15 minutes total. You'll learn the two steps of Hands-Only CPR: (1) Call 911, and (2) Push hard and fast in the center of the chest. No prior experience needed.</p>
+<p>After attending, you'll receive a certificate of participation by email along with quick-reference PDFs on CPR and AED use.</p>
+<p>If you can no longer attend, please reply to this email so we can free up your spot.</p>
+<p>See you tomorrow!</p>
+<p>&mdash; NH CPR Challenge</p>
+""")
+    return send_email(rsvp.email, f'Reminder: your CPR training is tomorrow at {training.location_name}', html)
+
+
 def send_certificate_ready(rsvp, certificate):
     """Notify attendee their certificate is available."""
     app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
@@ -269,6 +295,13 @@ def send_certificate_ready(rsvp, certificate):
 <p style="text-align:center;margin-top:24px;">
 <a href="{app_url}/certificate/{certificate.certificate_number}" style="display:inline-block;padding:12px 24px;background:#d4a843;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Download Certificate</a>
 </p>
+<h3 style="color:#1e3a5f;margin-top:32px;">Take these with you</h3>
+<p>Two quick-reference PDFs to share with family, neighbors, or keep on hand:</p>
+<ul>
+<li><a href="{app_url}/static/flyers/cpr-flyer.pdf" style="color:#1e3a5f;"><strong>Hands-Only CPR Quick-Reference</strong></a> &mdash; the two steps you just practiced, in one page you can post on the fridge or share at work</li>
+<li><a href="{app_url}/static/flyers/aed-flyer.pdf" style="color:#1e3a5f;"><strong>AED Quick-Reference</strong></a> &mdash; how to use an AED, plus how to register one in New Hampshire</li>
+</ul>
+<p>If you'd like to help your community get even safer, check whether your workplace, gym, school, or church has a registered AED. In NH, AEDs can be registered at <a href="https://aed.new" style="color:#1e3a5f;">aed.new</a> in about two minutes.</p>
 <p style="color:#64748b;font-size:13px;">Note: This certificate recognizes your participation in Hands-Only CPR awareness training. It is not an official CPR certification.</p>
 """)
     return send_email(rsvp.email, 'Your CPR Challenge Certificate is Ready!', html)

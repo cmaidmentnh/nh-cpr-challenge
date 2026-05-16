@@ -157,6 +157,7 @@ class RSVP(db.Model):
     district = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     attended = db.Column(db.Boolean, nullable=True, default=None)
+    reminder_sent_at = db.Column(db.DateTime, nullable=True)
 
     certificate = db.relationship('Certificate', backref='rsvp', uselist=False, cascade='all, delete-orphan', passive_deletes=True)
 
