@@ -302,6 +302,14 @@ def send_certificate_ready(rsvp, certificate):
 <li><a href="{app_url}/static/flyers/aed-flyer.pdf" style="color:#1e3a5f;"><strong>AED Quick-Reference</strong></a> &mdash; how to use an AED, plus how to register one in New Hampshire</li>
 </ul>
 <p>If you'd like to help your community get even safer, check whether your workplace, gym, school, or church has a registered AED. In NH, AEDs can be registered at <a href="https://aed.new" style="color:#1e3a5f;">aed.new</a> in about two minutes.</p>
-<p style="color:#64748b;font-size:13px;">Note: This certificate recognizes your participation in Hands-Only CPR awareness training. It is not an official CPR certification.</p>
+<h3 style="color:#1e3a5f;margin-top:32px;">Ready for full CPR certification?</h3>
+<p>Hands-Only CPR is awareness training. For a full certification (with rescue breaths, AED hands-on practice, infant/child CPR, and two-rescuer techniques), here are independent providers to consider:</p>
+<ul>
+<li><a href="https://www.redcross.org/take-a-class" style="color:#1e3a5f;"><strong>American Red Cross</strong></a> &mdash; in-person and online certification courses</li>
+<li><a href="https://cpr.heart.org/en/course-catalog-search" style="color:#1e3a5f;"><strong>American Heart Association</strong></a> &mdash; BLS, Heartsaver, ACLS</li>
+<li><a href="https://www.nhcpr.com" style="color:#1e3a5f;"><strong>NH CPR</strong></a> &mdash; five NH training locations offering CPR and First Aid certification</li>
+<li>Your local fire department or EMS service &mdash; many offer community CPR classes</li>
+</ul>
+<p style="color:#64748b;font-size:13px;">Note: This certificate recognizes your participation in Hands-Only CPR awareness training. It is not an official CPR certification. The NH CPR Challenge is an initiative of the New Hampshire Executive Council and is not affiliated with NH CPR, LLC or any private CPR training company.</p>
 """)
     return send_email(rsvp.email, 'Your CPR Challenge Certificate is Ready!', html)
