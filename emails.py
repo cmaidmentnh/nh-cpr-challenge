@@ -2,6 +2,7 @@
 
 import logging
 import os
+from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -20,22 +21,36 @@ def get_ses_client():
     )
 
 
-def send_email(to, subject, html_body, plain_body=None):
-    """Send an email via SES. Returns True on success."""
+def send_email(to, subject, html_body, plain_body=None, attachments=None):
+    """Send an email via SES. Returns True on success.
+
+    attachments: optional list of (filename, bytes, mimetype) tuples.
+    """
     sender_name = os.getenv('SES_SENDER_NAME', 'NH CPR Challenge')
     sender_email = os.getenv('SES_SENDER_EMAIL', 'info@cprchallengenh.com')
 
-    msg = MIMEMultipart('alternative')
+    body = MIMEMultipart('alternative')
+    if plain_body:
+        body.attach(MIMEText(plain_body, 'plain'))
+    body.attach(MIMEText(html_body, 'html'))
+
+    if attachments:
+        msg = MIMEMultipart('mixed')
+        msg.attach(body)
+        for filename, content, mimetype in attachments:
+            subtype = (mimetype or 'application/octet-stream').split('/', 1)[-1]
+            part = MIMEApplication(content, _subtype=subtype)
+            part.add_header('Content-Disposition', 'attachment', filename=filename)
+            msg.attach(part)
+    else:
+        msg = body
+
     msg['Subject'] = subject
     msg['From'] = f'{sender_name} <{sender_email}>'
     msg['To'] = to
     msg['Reply-To'] = sender_email
     msg['List-Unsubscribe'] = f'<mailto:{sender_email}?subject=unsubscribe>'
     msg['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'
-
-    if plain_body:
-        msg.attach(MIMEText(plain_body, 'plain'))
-    msg.attach(MIMEText(html_body, 'html'))
 
     try:
         client = get_ses_client()
@@ -284,14 +299,33 @@ def send_rsvp_reminder(rsvp, training):
     return send_email(rsvp.email, f'Reminder: your CPR training is tomorrow at {training.location_name}', html)
 
 
+def _certificate_attachment(rsvp, certificate):
+    """Build a lightweight PDF certificate attachment tuple for an attendee."""
+    from certificates import generate_certificate, EMAIL_BG
+    pdf = generate_certificate(
+        name=rsvp.name,
+        date_str=rsvp.training.date.strftime('%B %d, %Y'),
+        location=rsvp.training.location_name,
+        certificate_number=certificate.certificate_number,
+        bg_path=EMAIL_BG,
+    )
+    filename = f'CPR_Certificate_{certificate.certificate_number}.pdf'
+    return (filename, pdf.read(), 'application/pdf')
+
+
 def send_certificate_ready(rsvp, certificate):
-    """Notify attendee their certificate is available."""
+    """Notify attendee their certificate is available, with the PDF attached.
+
+    The PDF is attached directly (not just linked) so attendees behind
+    workplace firewalls that block the website can still get their certificate.
+    """
     app_url = os.getenv('APP_URL', 'https://cprchallengenh.com')
     html = _email_wrapper(f"""
 <h2 style="color:#1e3a5f;margin-top:0;">Your Certificate is Ready!</h2>
 <p>Hi {rsvp.name},</p>
-<p>Thank you for participating in the NH CPR Challenge! Your certificate of participation is ready to download.</p>
+<p>Thank you for participating in the NH CPR Challenge! <strong>Your certificate of participation is attached to this email as a PDF</strong> &mdash; you can open, print, or save it directly.</p>
 <p><strong>Certificate #:</strong> {certificate.certificate_number}</p>
+<p>If you'd prefer to download it from the web instead, use the button below:</p>
 <p style="text-align:center;margin-top:24px;">
 <a href="{app_url}/certificate/{certificate.certificate_number}" style="display:inline-block;padding:12px 24px;background:#d4a843;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Download Certificate</a>
 </p>
@@ -312,4 +346,39 @@ def send_certificate_ready(rsvp, certificate):
 </ul>
 <p style="color:#64748b;font-size:13px;">Note: This certificate recognizes your participation in Hands-Only CPR awareness training. It is not an official CPR certification. The NH CPR Challenge is an initiative of the New Hampshire Executive Council and is not affiliated with NH CPR, LLC or any private CPR training company.</p>
 """)
-    return send_email(rsvp.email, 'Your CPR Challenge Certificate is Ready!', html)
+    try:
+        attachments = [_certificate_attachment(rsvp, certificate)]
+    except Exception as e:  # never block the email if PDF generation hiccups
+        logger.error("Cert PDF attach failed for %s: %s", certificate.certificate_number, e)
+        attachments = None
+    return send_email(rsvp.email, 'Your CPR Challenge Certificate is Ready!', html, attachments=attachments)
+
+
+def send_certificate_bundle(to_email, to_name, rsvps_with_certs, org_label=None):
+    """Email one recipient a single PDF containing many attendees' certificates.
+
+    Used when a host/coordinator needs printable copies for a group whose
+    workplace firewall blocks the download links. rsvps_with_certs is a list of
+    (rsvp, certificate) tuples; all certs are merged into one multi-page PDF.
+    """
+    from certificates import generate_certificate_bundle
+    items = [{
+        'name': rsvp.name,
+        'date_str': rsvp.training.date.strftime('%B %d, %Y'),
+        'location': rsvp.training.location_name,
+        'certificate_number': cert.certificate_number,
+    } for rsvp, cert in rsvps_with_certs]
+    pdf = generate_certificate_bundle(items)
+    count = len(items)
+    label = f' for {org_label}' if org_label else ''
+    html = _email_wrapper(f"""
+<h2 style="color:#1e3a5f;margin-top:0;">Certificates{label}</h2>
+<p>Hi {to_name},</p>
+<p>Attached is a single PDF containing <strong>{count} participation certificate{'s' if count != 1 else ''}</strong> for your group's Hands-Only CPR training during the NH CPR Challenge. Each certificate is on its own page, ready to print and hand out.</p>
+<p>We're sending these as an attachment because some workplace networks block the certificate download links. If anyone would still like their own copy by email, just let us know.</p>
+<p style="color:#64748b;font-size:13px;">Thank you for everything you did to make these trainings happen.</p>
+<p style="color:#64748b;font-size:13px;">Note: These certificates recognize participation in Hands-Only CPR awareness training. They are not official CPR certifications.</p>
+""")
+    filename = f'CPR_Certificates_{count}.pdf'
+    attachments = [(filename, pdf.read(), 'application/pdf')]
+    return send_email(to_email, f'CPR Challenge Certificates{label} ({count})', html, attachments=attachments)

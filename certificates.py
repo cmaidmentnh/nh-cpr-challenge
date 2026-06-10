@@ -22,25 +22,17 @@ pdfmetrics.registerFont(TTFont('Lato-Bold', os.path.join(_fonts_dir, 'Lato-Bold.
 pdfmetrics.registerFont(TTFont('Lato-Italic', os.path.join(_fonts_dir, 'Lato-Italic.ttf')))
 
 
-def generate_certificate(name, date_str, location, certificate_number):
-    """Generate a PDF participation certificate.
+# Full-resolution background (used for the website download). The compressed
+# JPEG variant keeps emailed/printed certificate PDFs small enough for SES and
+# for recipients' attachment-size and spam filters.
+DEFAULT_BG = os.path.join(os.path.dirname(__file__), 'static', 'img', 'cert_background.png')
+EMAIL_BG = os.path.join(os.path.dirname(__file__), 'static', 'img', 'cert_background_email.jpg')
 
-    Args:
-        name: Participant's full name
-        date_str: Training date as formatted string (e.g., "May 19, 2026")
-        location: Training location name
-        certificate_number: Unique certificate ID (e.g., "CPR-2026-A3F8K")
 
-    Returns:
-        BytesIO containing the PDF
-    """
-    buf = BytesIO()
-    width, height = landscape(letter)  # 11" x 8.5"
-    c = canvas.Canvas(buf, pagesize=landscape(letter))
-
+def _draw_certificate(c, width, height, name, date_str, location, certificate_number, bg_path):
+    """Draw a single certificate page onto an existing canvas."""
     # Background image (full-page ornate border)
-    bg_path = os.path.join(os.path.dirname(__file__), 'static', 'img', 'cert_background.png')
-    if os.path.exists(bg_path):
+    if bg_path and os.path.exists(bg_path):
         c.drawImage(bg_path, 0, 0, width, height)
 
     # NH state seal
@@ -118,6 +110,47 @@ def generate_certificate(name, date_str, location, certificate_number):
     c.drawCentredString(width / 2, 1.15 * inch,
                          f'Certificate #{certificate_number}')
 
+
+def generate_certificate(name, date_str, location, certificate_number, bg_path=DEFAULT_BG):
+    """Generate a single-page PDF participation certificate.
+
+    Args:
+        name: Participant's full name
+        date_str: Training date as formatted string (e.g., "May 19, 2026")
+        location: Training location name
+        certificate_number: Unique certificate ID (e.g., "CPR-2026-A3F8K")
+        bg_path: Background image to embed. Defaults to the full-resolution PNG;
+            pass EMAIL_BG for lightweight emailed/printed copies.
+
+    Returns:
+        BytesIO containing the PDF
+    """
+    buf = BytesIO()
+    width, height = landscape(letter)  # 11" x 8.5"
+    c = canvas.Canvas(buf, pagesize=landscape(letter))
+    _draw_certificate(c, width, height, name, date_str, location, certificate_number, bg_path)
+    c.save()
+    buf.seek(0)
+    return buf
+
+
+def generate_certificate_bundle(items, bg_path=EMAIL_BG):
+    """Generate one multi-page PDF with a certificate per item.
+
+    Args:
+        items: iterable of dicts with keys name, date_str, location, certificate_number
+        bg_path: background image to embed (defaults to the lightweight JPEG)
+
+    Returns:
+        BytesIO containing the merged PDF (one certificate per page)
+    """
+    buf = BytesIO()
+    width, height = landscape(letter)
+    c = canvas.Canvas(buf, pagesize=landscape(letter))
+    for item in items:
+        _draw_certificate(c, width, height, item['name'], item['date_str'],
+                          item['location'], item['certificate_number'], bg_path)
+        c.showPage()
     c.save()
     buf.seek(0)
     return buf
