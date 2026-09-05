@@ -32,6 +32,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Session cookie hardening.
+#   SECURE   - never send the session cookie over an unencrypted connection.
+#              Flask's default is False, which means one plain http:// request,
+#              made before the redirect to https, leaks the cookie to anyone on
+#              the network path. Whoever copies it is logged in as that user.
+#   HTTPONLY - JavaScript cannot read it, so injected script cannot steal it.
+#   SAMESITE - not sent when another site triggers a request here, which stops a
+#              malicious page acting as a logged-in user.
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///cpr_challenge.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
